@@ -14,3 +14,4 @@ app.add_middleware(
 )
 
 app.include_router(report.router, prefix="/reports")
+

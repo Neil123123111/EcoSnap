@@ -8,17 +8,17 @@ interface ThemeContextType {
   toggleTheme: () => void;
 }
 
-// ⚠️ để null để detect lỗi nếu dùng sai
+// để null để detect lỗi nếu dùng sai
 const ThemeContext = createContext<ThemeContextType | null>(null);
 
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
-  // ✅ load từ localStorage (production-ready)
+  // load từ localStorage (production-ready)
   const [theme, setTheme] = useState<Theme>(() => {
     const saved = localStorage.getItem("theme");
     return (saved as Theme) || "light";
   });
 
-  // ✅ sync với <html class="dark">
+  // sync với <html class="dark">
   useEffect(() => {
     const root = window.document.documentElement;
 
@@ -32,7 +32,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem("theme", theme);
   }, [theme]);
 
-  // ✅ toggle
+  // toggle
   const toggleTheme = () => {
     setTheme((prev) => (prev === "light" ? "dark" : "light"));
   };
@@ -44,7 +44,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-// ✅ hook an toàn (bắt lỗi ngay nếu dùng sai)
+// hook an toàn (bắt lỗi ngay nếu dùng sai)
 export const useTheme = () => {
   const context = useContext(ThemeContext);
 

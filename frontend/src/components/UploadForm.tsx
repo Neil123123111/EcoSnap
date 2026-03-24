@@ -19,7 +19,7 @@ export default function UploadForm() {
   const handleSubmit = async () => {
     setLoading(true);
 
-    // 🔥 fake AI response (có bounding box)
+    // fake AI response (có bounding box)
     setTimeout(() => {
       setResult({
         severity: "high",
@@ -33,7 +33,7 @@ export default function UploadForm() {
     }, 1500);
   };
 
-  // 🔥 scroll tới result (UX xịn)
+  // scroll tới result (UX xịn)
   useEffect(() => {
     if (result) {
       document.getElementById("result")?.scrollIntoView({
