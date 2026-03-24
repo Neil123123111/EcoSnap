@@ -1,46 +1,119 @@
-import { useState } from "react";
-import { api } from "../services/api";
+import { useState, useEffect } from "react";
+import AIResult from "./AIResult";
+import HeatmapCanvas from "./HeatmapCanvas";
 
 export default function UploadForm() {
-  const [file, setFile] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
+  const [preview, setPreview] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<any>(null);
 
-  const handleChange = (e: any) => {
-    const f = e.target.files[0];
-    setFile(f);
-    setPreview(URL.createObjectURL(f));
+  const handleFiles = (selectedFiles: FileList | null) => {
+    if (!selectedFiles) return;
+
+    const arr = Array.from(selectedFiles);
+    setFiles(arr);
+    setPreview(arr.map((f) => URL.createObjectURL(f)));
   };
 
-  const submit = async () => {
-    if (!file) return;
+  const handleSubmit = async () => {
+    setLoading(true);
 
-    const formData = new FormData();
-    formData.append("file", file);
-
-    const res = await api.post("/reports", formData);
-    console.log(res.data);
-
-    alert("Submitted!");
+    // 🔥 fake AI response (có bounding box)
+    setTimeout(() => {
+      setResult({
+        severity: "high",
+        type: "Air Pollution",
+        boxes: [
+          { x: 120, y: 80, width: 100, height: 100 },
+          { x: 200, y: 120, width: 80, height: 80 },
+        ],
+      });
+      setLoading(false);
+    }, 1500);
   };
+
+  // 🔥 scroll tới result (UX xịn)
+  useEffect(() => {
+    if (result) {
+      document.getElementById("result")?.scrollIntoView({
+        behavior: "smooth",
+      });
+    }
+  }, [result]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-green-500">
-      <div className="bg-white p-6 rounded-xl shadow w-[300px] text-center">
-        <h1 className="text-xl font-bold mb-4">🌱 EcoSnap</h1>
+    <div
+      className="
+        bg-white dark:bg-gray-800
+        text-gray-800 dark:text-gray-100
+        p-6 rounded-2xl shadow w-full
+        transition
+      "
+    >
+      {/* Drag & Drop */}
+      <label
+        className="
+          border-2 border-dashed rounded-xl p-6 text-center cursor-pointer block
+          border-gray-300 dark:border-gray-600
+          text-gray-500 dark:text-gray-300
+          hover:bg-gray-50 dark:hover:bg-gray-700
+          transition
+        "
+      >
+        Drag & drop or click to upload
+        <input
+          type="file"
+          multiple
+          className="hidden"
+          onChange={(e) => handleFiles(e.target.files)}
+        />
+      </label>
 
-        <input type="file" onChange={handleChange} />
-
-        {preview && (
-          <img src={preview} className="mt-3 rounded" />
-        )}
-
-        <button
-          onClick={submit}
-          className="mt-3 w-full bg-green-600 text-white py-2 rounded"
-        >
-          Submit
-        </button>
+      {/* Preview + Heatmap */}
+      <div className="grid grid-cols-2 gap-3 mt-4">
+        {preview.map((src, i) => (
+          <div key={i}>
+            {result ? (
+              <HeatmapCanvas image={src} boxes={result.boxes} />
+            ) : (
+              <img
+                src={src}
+                className="rounded-lg object-cover w-full h-32"
+              />
+            )}
+          </div>
+        ))}
       </div>
+
+      {/* Button */}
+      <button
+        onClick={handleSubmit}
+        disabled={files.length === 0}
+        className="
+          mt-4 w-full py-2 rounded-xl
+          bg-green-600 text-white
+          flex items-center justify-center gap-2
+          hover:bg-green-700 transition
+          disabled:opacity-50 disabled:cursor-not-allowed
+        "
+      >
+        {loading ? (
+          <>
+            <span className="animate-spin">🌀</span>
+            Analyzing...
+          </>
+        ) : (
+          "Analyze"
+        )}
+      </button>
+
+      {/* Result */}
+      {result && (
+        <div id="result" className="mt-4">
+          <AIResult severity={result.severity} type={result.type} />
+        </div>
+      )}
     </div>
   );
 }
