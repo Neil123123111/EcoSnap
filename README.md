@@ -94,6 +94,24 @@ npm run dev
 
 ---
 
+## Chạy cả frontend và backend chỉ bằng 1 lệnh
+
+1. Từ thư mục repo root:
+
+```bash
+npm install
+npm run dev
+```
+
+2. Lệnh `npm run dev` đã được cấu hình trong `package.json`:
+
+- Backend: `cd backend && source venv/bin/activate && uvicorn app.main:app --reload`
+- Frontend: `cd frontend && npm run dev`
+
+> Với Windows PowerShell, bạn cần thay `source venv/bin/activate` bằng `venv\Scripts\Activate.ps1`.
+
+---
+
 ## Kiểm thử nhanh
 
 1. Start backend
