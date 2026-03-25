@@ -94,7 +94,7 @@ npm run dev
 
 ---
 
-## Chạy cả frontend và backend chỉ bằng 1 lệnh
+## Chạy cả frontend và backend chỉ bằng 1 dòng lệnh
 
 1. Từ thư mục repo root:
 
