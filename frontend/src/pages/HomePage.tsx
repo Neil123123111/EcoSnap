@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import UploadForm from "../components/UploadForm";
 import Navbar from "../components/Navbar";
+import HeroVideo from "../components/HeroVideo";
 
 export default function HomePage() {
   const scrollToUpload = () => {
@@ -18,34 +19,8 @@ export default function HomePage() {
     >
       <Navbar />
 
-      {/* HERO */}
-      <section className="min-h-screen flex flex-col justify-center items-center text-center px-6">
-        <motion.h1
-          initial={{ opacity: 0, y: -40 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-6xl font-extrabold mb-6 leading-tight 
-                     text-gray-800 dark:text-white"
-        >
-          Protect Earth with AI 🌍
-        </motion.h1>
-
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-lg max-w-xl mb-8 
-                     text-gray-600 dark:text-gray-300"
-        >
-          Report environmental issues instantly and let AI analyze pollution
-          in real-time.
-        </motion.p>
-
-        <button
-          onClick={scrollToUpload}
-          className="bg-green-600 text-white px-8 py-3 rounded-2xl shadow-lg hover:bg-green-700 transition"
-        >
-          Start Reporting
-        </button>
-      </section>
+      {/* 🎬 HERO VIDEO (REPLACED OLD HERO) */}
+      <HeroVideo onScrollToUpload={scrollToUpload} />
 
       {/* FEATURES */}
       <section className="py-28 bg-white dark:bg-gray-800 transition">
@@ -90,7 +65,7 @@ export default function HomePage() {
                 "
               />
 
-              {/* 🔥 SCAN LINE (AI effect) */}
+              {/* 🔥 SCAN LINE */}
               <div className="absolute inset-0 overflow-hidden rounded-3xl pointer-events-none">
                 <div
                   className="
