@@ -47,4 +47,4 @@ jobs:
 
       - name: Check backend syntax
         working-directory: ./backend
-        run: python -m py_compile main.py
+        run: python -m py_compile app/main.py
