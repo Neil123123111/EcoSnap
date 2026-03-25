@@ -9,7 +9,7 @@ export default function HeroVideo({ onScrollToUpload }: Props) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // 🎯 đảm bảo video play ngay khi mount
+  // đảm bảo video play ngay khi mount
   useEffect(() => {
     const video = videoRef.current;
     if (video) {
@@ -21,7 +21,7 @@ export default function HeroVideo({ onScrollToUpload }: Props) {
 
   return (
     <section className="relative h-screen w-full overflow-hidden">
-      {/* 🎥 VIDEO (LOAD TỪ PUBLIC) */}
+      {/* VIDEO (LOAD TỪ PUBLIC) */}
       <video
         ref={videoRef}
         className={`
@@ -38,18 +38,18 @@ export default function HeroVideo({ onScrollToUpload }: Props) {
         onLoadedData={() => setIsLoaded(true)}
       />
 
-      {/* 🧱 FALLBACK (tránh trắng màn hình) */}
+      {/* FALLBACK (tránh trắng màn hình) */}
       {!isLoaded && (
         <div className="absolute inset-0 bg-black" />
       )}
 
-      {/* 🌑 OVERLAY */}
+      {/* OVERLAY */}
       <div className="absolute inset-0 bg-black/60" />
 
-      {/* 🌈 GRADIENT AI EFFECT */}
+      {/* GRADIENT AI EFFECT */}
       <div className="absolute inset-0 bg-gradient-to-br from-green-500/20 via-transparent to-blue-500/20" />
 
-      {/* 🌱 CONTENT */}
+      {/* CONTENT */}
       <div className="relative z-10 flex flex-col items-center justify-center h-full text-center px-6">
         <motion.h1
           initial={{ opacity: 0, y: 40 }}
