@@ -1,0 +1,10 @@
+yolov8n.pt
+venv/
+backend/venv/
+__pycache__/
+*.pyc       
+.env    
+ai_model
+*.zip
+*.h5
+.DS_Store
