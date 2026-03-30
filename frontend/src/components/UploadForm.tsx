@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import AIResult from "./AIResult";
 import HeatmapCanvas from "./HeatmapCanvas";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+
 export default function UploadForm() {
   const [files, setFiles] = useState<File[]>([]);
   const [preview, setPreview] = useState<string[]>([]);
@@ -17,23 +19,46 @@ export default function UploadForm() {
   };
 
   const handleSubmit = async () => {
+    if (files.length === 0) return;
+
     setLoading(true);
 
-    // fake AI response (có bounding box)
-    setTimeout(() => {
-      setResult({
-        severity: "high",
-        type: "Air Pollution",
-        boxes: [
-          { x: 120, y: 80, width: 100, height: 100 },
-          { x: 200, y: 120, width: 80, height: 80 },
-        ],
+    try {
+      const formData = new FormData();
+      formData.append("file", files[0]); // lấy ảnh đầu tiên
+
+      const res = await fetch(`${API_URL}/report/analyze`, {
+        method: "POST",
+        body: formData,
       });
-      setLoading(false);
-    }, 1500);
+
+      const data = await res.json();
+
+      // 🔥 convert boxes backend → format HeatmapCanvas
+      const boxes =
+        data.boxes?.map((b: any) => ({
+          x: b.x1,
+          y: b.y1,
+          width: b.x2 - b.x1,
+          height: b.y2 - b.y1,
+        })) || [];
+
+      setResult({
+        severity: data.label === "trash" ? "high" : "medium",
+        type: data.label,
+        boxes,
+        image_url: data.image_url,
+        confidence: data.confidence,
+      });
+    } catch (err) {
+      console.error(err);
+      alert("API error");
+    }
+
+    setLoading(false);
   };
 
-  // scroll tới result (UX xịn)
+  // scroll tới result
   useEffect(() => {
     if (result) {
       document.getElementById("result")?.scrollIntoView({
@@ -51,7 +76,7 @@ export default function UploadForm() {
         transition
       "
     >
-      {/* Drag & Drop */}
+      {/* Upload */}
       <label
         className="
           border-2 border-dashed rounded-xl p-6 text-center cursor-pointer block
@@ -111,7 +136,12 @@ export default function UploadForm() {
       {/* Result */}
       {result && (
         <div id="result" className="mt-4">
-          <AIResult severity={result.severity} type={result.type} />
+          <AIResult
+            severity={result.severity}
+            type={result.type}
+            confidence={result.confidence}
+            image_url={result.image_url}
+          />
         </div>
       )}
     </div>

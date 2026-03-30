@@ -1,3 +1,14 @@
 fastapi
 uvicorn
 python-multipart
+sqlalchemy
+alembic
+python-dotenv
+psycopg2-binary
+tensorflow-macos
+tensorflow-metal
+bcrypt
+passlib
+python-jose[cryptography]
+email-validator
+pydantic[email]
