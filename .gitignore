@@ -154,3 +154,5 @@ dist/
 dist-ssr/
 *.local     
 .env.example
+yarn.lock
+package-lock.json

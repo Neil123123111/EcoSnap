@@ -17,7 +17,7 @@ export default function HeatmapCanvas({ image, boxes }: any) {
       ctx.drawImage(img, 0, 0);
 
       boxes.forEach((box: any) => {
-        // 🔥 heatmap
+        //  heatmap
         const gradient = ctx.createRadialGradient(
           box.x,
           box.y,
