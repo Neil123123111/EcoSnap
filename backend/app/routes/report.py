@@ -18,32 +18,32 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 @router.post("/analyze")
 async def analyze(file: UploadFile = File(...), db: Session = Depends(get_db)):
     try:
-        # 👉 validate file
+        #  validate file
         if not file.filename:
             raise HTTPException(status_code=400, detail="No file provided")
         
-        # 👉 tạo tên file unique
+        #  tạo tên file unique
         filename = f"{uuid.uuid4()}.jpg"
         file_path = f"{UPLOAD_DIR}/{filename}"
 
-        # 👉 save file
+        #  save file
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
 
-        # 👉 reset file để AI đọc lại
+        #  reset file để AI đọc lại
         file.file.seek(0)
 
-        # 👉 AI predict
+        #  AI predict
         result = await analyze_image(file.file)
         
-        # 👉 check AI error
+        #  check AI error
         if "error" in result:
             raise HTTPException(status_code=500, detail=f"AI Analysis failed: {result['error']}")
 
-        # 👉 url để frontend dùng
+        #  url để frontend dùng
         image_url = f"{settings.BASE_URL}/static/upload/{filename}"
 
-        # 👉 save DB
+        #  save DB
         report = Report(
             image_url=image_url,
             label=result["label"],

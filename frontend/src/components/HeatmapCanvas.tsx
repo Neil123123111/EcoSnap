@@ -38,7 +38,7 @@ export default function HeatmapCanvas({ image, boxes }: any) {
           box.height
         );
 
-        // 🔥 bounding box
+        //  bounding box
         ctx.strokeStyle = "red";
         ctx.lineWidth = 2;
         ctx.strokeRect(
