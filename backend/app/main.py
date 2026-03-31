@@ -10,7 +10,7 @@ from app.core.config import Settings
 settings = Settings()
 app = FastAPI()
 
-# 👉 CORS - allow frontend to connect
+# CORS - allow frontend to connect
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -24,18 +24,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 👉 tạo table
+#  tạo table
 report_model.Base.metadata.create_all(bind=engine)
 user_model.Base.metadata.create_all(bind=engine)
 
-# 👉 serve static
+#  serve static
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
-# 👉 health check
+# health check
 @app.get("/health")
 async def health():
     return {"status": "ok"}
 
-# 👉 routes
+#  routes
 app.include_router(auth.router)
 app.include_router(report.router)

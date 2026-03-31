@@ -19,16 +19,16 @@ except Exception as e:
     print(f"⚠️ Keras model load failed ({model_path}): {e}")
     model = None
 
-# ⚠️ SỬA ĐÚNG THỨ TỰ CLASS (QUAN TRỌNG)
+#  SỬA ĐÚNG THỨ TỰ CLASS (QUAN TRỌNG)
 CLASSES = ["cardboard", "glass", "metal", "plastic", "paper", "trash"]
 
 
 async def analyze_image(file):
     try:
-        # 🔥 BƯỚC 1: YOLO detect
+        # BƯỚC 1: YOLO detect
         objects, boxes = await detect_objects(file)
 
-        # 👉 nếu nhiều object → trash
+        # nếu nhiều object → trash
 # nếu có object + confidence không cao → trash
         if len(objects) >= 2 or (len(objects) == 1 and objects[0]["name"] == "person"):
             return {
@@ -38,7 +38,7 @@ async def analyze_image(file):
         "boxes": boxes
         }
 
-        # 🔥 BƯỚC 2: fallback sang model cũ
+        # BƯỚC 2: fallback sang model cũ
         if model is None:
             return {
                 "label": "trash",

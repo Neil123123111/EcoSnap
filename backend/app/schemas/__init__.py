@@ -21,4 +21,4 @@ class ReportRead(BaseModel):
     created_at: datetime
 
     class Config:
-        from_attributes = True  # 🔥 SQLAlchemy compatibility
+        from_attributes = True  #  SQLAlchemy compatibility

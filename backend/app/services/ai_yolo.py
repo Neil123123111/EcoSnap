@@ -12,7 +12,7 @@ if not os.path.exists(model_path):
 try:
     yolo_model = YOLO(model_path)
 except Exception as e:
-    print(f"⚠️ YOLO load failed ({model_path}): {e}")
+    print(f" YOLO load failed ({model_path}): {e}")
     yolo_model = None
 
 # COCO class mapping đơn giản cho EcoSnap

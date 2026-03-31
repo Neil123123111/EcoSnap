@@ -1,13 +1,13 @@
 from dotenv import load_dotenv
 import os
 
-# 🔥 load .env
+# load .env
 load_dotenv()
 
 
 class Settings:
     # ========================
-    # 🔥 DATABASE
+    #  DATABASE
     # ========================
     DATABASE_URL: str = os.getenv(
         "DATABASE_URL",
@@ -15,7 +15,7 @@ class Settings:
     )
 
     # ========================
-    # 📂 UPLOAD
+    # UPLOAD
     # ========================
     UPLOAD_DIR: str = os.getenv(
         "UPLOAD_DIR",
@@ -23,7 +23,7 @@ class Settings:
     )
 
     # ========================
-    # 🌐 SERVER
+    # SERVER
     # ========================
     BASE_URL: str = os.getenv(
         "BASE_URL",
@@ -31,7 +31,7 @@ class Settings:
     )
 
     # ========================
-    # 🔐 SECRET (future use)
+    # SECRET (future use)
     # ========================
     SECRET_KEY: str = os.getenv(
         "SECRET_KEY",
@@ -39,18 +39,18 @@ class Settings:
     )
 
     # ========================
-    # ⚙️ DEBUG
+    # DEBUG
     # ========================
     DEBUG: bool = os.getenv("DEBUG", "True") == "True"
 
     # ========================
-    # 🔍 VALIDATION
+    # VALIDATION
     # ========================
     def validate(self):
         if not self.DATABASE_URL:
             raise ValueError(" DATABASE_URL is missing")
 
 
-# 🔥 singleton
+# singleton
 settings = Settings()
 settings.validate()
