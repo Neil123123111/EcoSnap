@@ -48,7 +48,7 @@ class Settings:
     # ========================
     def validate(self):
         if not self.DATABASE_URL:
-            raise ValueError("❌ DATABASE_URL is missing")
+            raise ValueError(" DATABASE_URL is missing")
 
 
 # 🔥 singleton
