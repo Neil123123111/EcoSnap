@@ -20,7 +20,6 @@ pydantic==2.5.0
 pydantic[email]==2.5.0
 
 # AI/ML Models
-tensorflow-macos==2.16.0
 tensorflow-metal==1.1.0
 ultralytics==8.0.216
 pillow==10.1.0
