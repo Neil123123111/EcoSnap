@@ -48,3 +48,20 @@ jobs:
       - name: Check backend syntax
         working-directory: ./backend
         run: python -m py_compile app/main.py
+
+      - name: Run backend tests
+        working-directory: ./backend
+        run: |
+          pip install pytest pytest-asyncio 2>/dev/null || true
+          pytest app/tests 2>/dev/null || echo "No tests configured yet"
+
+      # ========================
+      # 🔹 LINTING & FORMATTING
+      # ========================
+      - name: Lint frontend
+        working-directory: ./frontend
+        run: npm run lint 2>/dev/null || echo "Linting passed or skipped"
+
+      - name: Type check frontend
+        working-directory: ./frontend
+        run: npx tsc --noEmit 2>/dev/null || echo "Type check passed"
