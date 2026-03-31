@@ -8,70 +8,10 @@ export default function HomePage() {
   const navigate = useNavigate();
   const [visibleSteps, setVisibleSteps] = useState<Set<number>>(new Set());
   const stepRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   
   const scrollToUpload = () => {
     document.getElementById("upload")?.scrollIntoView({ behavior: "smooth" });
   };
-
-  const toggleMenu = (itemId: string) => {
-    const newExpanded = new Set(expandedItems);
-    if (newExpanded.has(itemId)) {
-      newExpanded.delete(itemId);
-    } else {
-      newExpanded.add(itemId);
-    }
-    setExpandedItems(newExpanded);
-  };
-
-  const menuItems = [
-    {
-      id: "home",
-      label: "🏠 Home",
-      icon: "🏠",
-      children: []
-    },
-    {
-      id: "features",
-      label: "✨ Features",
-      icon: "✨",
-      children: [
-        { id: "ai-detection", label: "🤖 AI Detection", icon: "🤖" },
-        { id: "upload", label: "📸 Upload Evidence", icon: "📸" },
-        { id: "tracking", label: "📊 Track Issues", icon: "📊" }
-      ]
-    },
-    {
-      id: "community",
-      label: "👥 Community",
-      icon: "👥",
-      children: [
-        { id: "reports", label: "📋 Recent Reports", icon: "📋" },
-        { id: "leaderboard", label: "🏆 Leaderboard", icon: "🏆" },
-        { id: "members", label: "👤 Members", icon: "👤" }
-      ]
-    },
-    {
-      id: "resources",
-      label: "📚 Resources",
-      icon: "📚",
-      children: [
-        { id: "guide", label: "📖 How It Works", icon: "📖" },
-        { id: "faq", label: "❓ FAQ", icon: "❓" },
-        { id: "contact", label: "📧 Contact Us", icon: "📧" }
-      ]
-    },
-    {
-      id: "settings",
-      label: "⚙️ Settings",
-      icon: "⚙️",
-      children: [
-        { id: "profile", label: "👤 Profile", icon: "👤" },
-        { id: "preferences", label: "🎨 Preferences", icon: "🎨" },
-        { id: "privacy", label: "🔒 Privacy", icon: "🔒" }
-      ]
-    }
-  ];
 
   // Intersection Observer for scroll animations
   useEffect(() => {
@@ -110,63 +50,6 @@ export default function HomePage() {
         relative
       "
     >
-      {/* Top Header Menu Bar */}
-      <div className="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-800 shadow-lg border-b-2 border-green-200 dark:border-green-700">
-        <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
-          {/* Menu Items - Left */}
-          <div className="flex items-center gap-1">
-            {menuItems.map((item) => (
-              <div key={item.id} className="relative group">
-                {/* Parent Menu Item */}
-                <button
-                  onClick={() => {
-                    if (item.children.length > 0) {
-                      toggleMenu(item.id);
-                    }
-                  }}
-                  className="px-4 py-2 rounded-lg font-medium transition-all duration-300 flex items-center gap-2 text-gray-700 dark:text-gray-200 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/30"
-                >
-                  <span className="text-lg">{item.icon}</span>
-                  <span className="hidden sm:inline">{item.label.split(' ')[1]}</span>
-                  {item.children.length > 0 && (
-                    <span className={`transform transition-transform duration-300 text-sm ${
-                      expandedItems.has(item.id) ? "rotate-180" : ""
-                    }`}>
-                      ⌄
-                    </span>
-                  )}
-                </button>
-
-                {/* Dropdown Menu for Child Items */}
-                {item.children.length > 0 && expandedItems.has(item.id) && (
-                  <div className="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-gray-700 rounded-lg shadow-xl border border-gray-200 dark:border-gray-600 py-2 z-50">
-                    {item.children.map((child) => (
-                      <button
-                        key={child.id}
-                        onClick={() => setExpandedItems(new Set())}
-                        className="w-full text-left px-4 py-2 text-gray-700 dark:text-gray-200 hover:bg-green-100 dark:hover:bg-green-900/30 hover:text-green-600 dark:hover:text-green-400 transition-colors duration-200 flex items-center gap-2"
-                      >
-                        <span className="text-lg">{child.icon}</span>
-                        <span className="text-sm">{child.label.split(' ')[1]}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-
-          {/* EcoSnap Branding - Right */}
-          <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-full px-5 py-2 shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2 border-2 border-white/40 cursor-pointer hover:scale-105">
-            <span className="text-2xl">🌍</span>
-            <span className="text-lg font-bold text-white hidden sm:inline">
-              EcoSnap
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Add padding to content to account for fixed header */}
       <div className="pt-24">
         <Navbar />
 
@@ -483,7 +366,7 @@ export default function HomePage() {
           <div className="text-center mb-24">
             <div className="inline-block">
               <span className="inline-block px-4 py-2 rounded-full bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 text-sm font-semibold mb-6">
-                🌱 Our People
+                Our Team
               </span>
             </div>
             <h2 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-gray-900 via-green-600 to-blue-600 dark:from-white dark:via-green-400 dark:to-blue-400 bg-clip-text text-transparent">
@@ -515,7 +398,7 @@ export default function HomePage() {
                 name: "Phạm Văn Hiếu",
                 role: "DevOps & Infrastructure",
                 bio: "Building scalable and reliable infrastructure systems",
-                image: "",
+                image: "/src/assets/team/z7677979674856_1904b5edc2b6b7328ba8feb2a5f27157.jpg",
                 color: "from-green-400 to-green-600",
               },
               {
