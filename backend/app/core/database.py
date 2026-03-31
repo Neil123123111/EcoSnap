@@ -6,38 +6,38 @@ from app.core.config import settings
 
 DATABASE_URL = settings.DATABASE_URL
 
-# 🔥 load biến môi trường từ .env
+#  load biến môi trường từ .env
 load_dotenv()
 
-# 🔥 lấy DATABASE_URL (có fallback để tránh lỗi)
+# lấy DATABASE_URL (có fallback để tránh lỗi)
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
     "postgresql://postgres:Neildo123!%40%23@localhost:5432/ecosnap"
 )
 
-# 🚨 nếu vẫn None → crash rõ ràng
+# nếu vẫn None → crash rõ ràng
 if not DATABASE_URL:
-    raise ValueError("❌ DATABASE_URL not found in environment variables")
+    raise ValueError(" DATABASE_URL not found in environment variables")
 
-# 🔥 tạo engine
+#  tạo engine
 engine = create_engine(
     DATABASE_URL,
     echo=False,        # debug SQL (bật True nếu cần)
     future=True
 )
 
-# 🔥 tạo session
+#  tạo session
 SessionLocal = sessionmaker(
     autocommit=False,
     autoflush=False,
     bind=engine
 )
 
-# 🔥 base model
+# base model
 Base = declarative_base()
 
 
-# 🔥 dependency dùng cho FastAPI
+#  dependency dùng cho FastAPI
 def get_db():
     db: Session = SessionLocal()
     try:
