@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Header
 from sqlalchemy.orm import Session
+from typing import Optional, cast
 from app.core.database import get_db
 from app.core.security import hash_password, verify_password, create_access_token, decode_token
 from app.models.user import User
@@ -50,9 +51,9 @@ async def login(user_data: UserLogin, db: Session = Depends(get_db)):
     """Login user"""
     
     # Find user by username
-    user = db.query(User).filter(User.username == user_data.username).first()
+    user: Optional[User] = db.query(User).filter(User.username == user_data.username).first()
     
-    if not user or not verify_password(user_data.password, user.hashed_password):
+    if not user or not verify_password(user_data.password, cast(str, user.hashed_password)):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid username or password",
@@ -101,7 +102,7 @@ async def get_current_user(
         )
     
     username = payload.get("sub")
-    user = db.query(User).filter(User.username == username).first()
+    user: Optional[User] = db.query(User).filter(User.username == username).first()
     
     if not user:
         raise HTTPException(

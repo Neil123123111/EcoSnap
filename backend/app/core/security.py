@@ -21,7 +21,8 @@ def hash_password(password: str) -> str:
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a password against its hash"""
     plain_bytes = plain_password.encode("utf-8")[:72]
-    hashed_bytes = hashed_password.encode("utf-8")
+    # Convert hashed_password to str to handle SQLAlchemy Column types
+    hashed_bytes = str(hashed_password).encode("utf-8")
     return bcrypt.checkpw(plain_bytes, hashed_bytes)
 
 

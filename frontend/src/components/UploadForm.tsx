@@ -32,6 +32,11 @@ export default function UploadForm() {
         body: formData,
       });
 
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ detail: `HTTP ${res.status}` }));
+        throw new Error(errorData.detail || `API error: ${res.status}`);
+      }
+
       const data = await res.json();
 
       // 🔥 convert boxes backend → format HeatmapCanvas
@@ -52,7 +57,7 @@ export default function UploadForm() {
       });
     } catch (err) {
       console.error(err);
-      alert("API error");
+      alert(`API error: ${err instanceof Error ? err.message : String(err)}`);
     }
 
     setLoading(false);
