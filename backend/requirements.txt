@@ -1,14 +1,37 @@
-fastapi
-uvicorn
-python-multipart
-sqlalchemy
-alembic
-python-dotenv
-psycopg2-binary
-tensorflow-macos
-tensorflow-metal
-bcrypt
-passlib
-python-jose[cryptography]
-email-validator
-pydantic[email]
+# Core API Framework
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+python-multipart==0.0.6
+
+# Database
+sqlalchemy==2.0.23
+psycopg2-binary==2.9.9
+alembic==1.12.1
+
+# Authentication & Security
+bcrypt==4.1.1
+passlib==1.7.4
+python-jose[cryptography]==3.5.0
+cryptography==41.0.7
+email-validator==2.1.0
+
+# Data Validation
+pydantic==2.5.0
+pydantic[email]==2.5.0
+
+# AI/ML Models
+tensorflow-macos==2.16.0
+tensorflow-metal==1.1.0
+ultralytics==8.0.216
+pillow==10.1.0
+numpy==1.24.3
+
+# Environment Variables
+python-dotenv==1.0.0
+
+# Production Server (optional)
+gunicorn==21.2.0
+
+# Development & Debugging
+pytest==7.4.3
+pytest-asyncio==0.21.1

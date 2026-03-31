@@ -1,9 +1,45 @@
 {
+  "name": "ecosnap",
+  "version": "1.0.0",
+  "description": "Environmental Issue Reporting Platform with AI Analysis",
   "scripts": {
-    "dev": "concurrently \"cd backend && source venv/bin/activate && uvicorn app.main:app --reload\" \"cd frontend && npm run dev\""
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "cd backend && python -c \"from app.main import app; import uvicorn; uvicorn.run(app, host='127.0.0.1', port=8000, reload=True)\"",
+    "dev:frontend": "cd frontend && npm run dev",
+    "build": "npm run build:backend && npm run build:frontend",
+    "build:backend": "cd backend && pip install -r requirements.txt",
+    "build:frontend": "cd frontend && npm install && npm run build",
+    "start": "concurrently \"npm run start:backend\" \"npm run start:frontend\"",
+    "start:backend": "cd backend && gunicorn app.main:app --workers 4 --worker-class uvicorn.workers.UvicornWorker",
+    "start:frontend": "cd frontend && npm run preview",
+    "test": "npm run test:backend && npm run test:frontend",
+    "test:backend": "cd backend && pytest",
+    "test:frontend": "cd frontend && npm run test",
+    "lint": "npm run lint:backend && npm run lint:frontend",
+    "lint:frontend": "cd frontend && npm run lint",
+    "setup": "npm install && cd backend && pip install -r requirements.txt && cd ../frontend && npm install",
+    "clean": "rm -rf backend/venv frontend/node_modules",
+    "docs": "echo 'API docs at http://localhost:8000/docs'"
   },
   "dependencies": {
     "react-router-dom": "^7.13.2",
     "concurrently": "^8.2.0"
+  },
+  "devDependencies": {
+    "typescript": "~5.9.3"
+  },
+  "keywords": [
+    "environmental",
+    "reporting",
+    "ai",
+    "computer-vision",
+    "yolo",
+    "tensorflow"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
   }
 }
