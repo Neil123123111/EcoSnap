@@ -1,9 +1,12 @@
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import UploadForm from "../components/UploadForm";
 import Navbar from "../components/Navbar";
 import HeroVideo from "../components/HeroVideo";
 
 export default function HomePage() {
+  const navigate = useNavigate();
+  
   const scrollToUpload = () => {
     document.getElementById("upload")?.scrollIntoView({ behavior: "smooth" });
   };
@@ -35,24 +38,28 @@ export default function HomePage() {
               title: "Upload Evidence",
               desc: "Snap and upload environmental violations instantly.",
               icon: "📸",
+              action: () => navigate("/upload"),
             },
             {
               title: "AI Detection",
               desc: "AI identifies pollution types automatically.",
               icon: "🤖",
+              action: () => navigate("/upload"),
             },
             {
-              title: "Smart Reports",
-              desc: "Track and analyze environmental data over time.",
-              icon: "📊",
+              title: "Report Issues",
+              desc: "Submit evidence with AI analysis and community verification.",
+              icon: "📢",
+              action: () => navigate("/upload"),
             },
           ].map((f, index) => (
-            <motion.div
+            <motion.button
               key={f.title}
+              onClick={f.action}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.2 }}
-              className="relative group"
+              className="relative group text-left w-full"
             >
               {/* 🔥 BOUNDING BOX AI */}
               <div
@@ -99,7 +106,7 @@ export default function HomePage() {
                   {f.desc}
                 </p>
               </div>
-            </motion.div>
+            </motion.button>
           ))}
         </div>
       </section>

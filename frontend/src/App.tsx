@@ -1,24 +1,9 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
-import Dashboard from "./pages/Dashboard";
-import { AuthProvider, useAuth } from "./context/AuthContext";
-
-// Protected route component
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, loading } = useAuth();
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-xl text-gray-600">Loading...</div>
-      </div>
-    );
-  }
-
-  return isAuthenticated ? children : <Navigate to="/login" />;
-}
+import UploadEvidencePage from "./pages/UploadEvidencePage";
+import { AuthProvider } from "./context/AuthContext";
 
 function AppRoutes() {
   return (
@@ -26,14 +11,7 @@ function AppRoutes() {
       <Route path="/" element={<HomePage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-        }
-      />
+      <Route path="/upload" element={<UploadEvidencePage />} />
     </Routes>
   );
 }

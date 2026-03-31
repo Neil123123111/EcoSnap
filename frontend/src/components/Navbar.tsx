@@ -44,10 +44,10 @@ const Navbar = () => {
               Welcome, <span className="font-semibold">{user?.username}</span>
             </div>
             <button 
-              onClick={() => navigate("/dashboard")}
+              onClick={() => navigate("/upload")}
               className="bg-green-500 text-white px-4 py-2 rounded-xl hover:bg-green-600 transition"
             >
-              Dashboard
+              📸 Upload
             </button>
             <button 
               onClick={() => {

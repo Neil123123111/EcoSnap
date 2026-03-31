@@ -356,7 +356,7 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 5. Kiểm tra API:
 
-- Truy cập: `http://localhost:8000/docs`
+- Truy cập: `http://localhost:8001/docs`
 
 ---
 

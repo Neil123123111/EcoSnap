@@ -31,7 +31,7 @@ export default function LoginPage() {
 
       const data = await res.json();
       login(data.access_token, data.user);
-      navigate("/dashboard");
+      navigate("/");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");
     } finally {
