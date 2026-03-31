@@ -501,9 +501,8 @@ export default function HomePage() {
                 name: "Phan Hải Trần Quang",
                 role: "CTO & Design",
                 bio: "Leading technical architecture and innovative product design",
-                image: "/src/assets/team/phan-hai-tran-quang.jpg",
+                image: "/src/assets/team/z7677651184707_466b1602689d0e14df72c47945b2e9ed.jpg",
                 color: "from-blue-400 to-blue-600",
-                icon: "🏗️"
               },
               {
                 name: "Đỗ Châu Bửu",
@@ -511,15 +510,13 @@ export default function HomePage() {
                 bio: "Driving product strategy and user-centric development",
                 image: "src/assets/team/02E7CD6C-B8DA-4240-A31C-B11688163FE0_1_105_c.jpeg",
                 color: "from-purple-400 to-purple-600",
-                icon: "📊"
               },
               {
                 name: "Phạm Văn Hiếu",
                 role: "DevOps & Infrastructure",
                 bio: "Building scalable and reliable infrastructure systems",
-                image: "/src/assets/team/pham-van-hieu.jpg",
+                image: "",
                 color: "from-green-400 to-green-600",
-                icon: "⚙️"
               },
               {
                 name: "Võ Xuân Hữu",
@@ -527,15 +524,13 @@ export default function HomePage() {
                 bio: "Creating beautiful and responsive user experiences",
                 image: "/src/assets/team/vo-xuan-huu.jpg",
                 color: "from-pink-400 to-pink-600",
-                icon: "🎨"
               },
               {
                 name: "Phạm Trần Tiến Phát",
                 role: "Backend Developer",
                 bio: "Designing robust APIs and database architecture",
-                image: "/src/assets/team/pham-tran-tien-phat.jpg",
+                image: "/src/assets/team/z7677692245542_328b5d4631a61a37c9d4f787b76c93b1.jpg",
                 color: "from-orange-400 to-orange-600",
-                icon: "🔧"
               }
             ].map((member, idx) => (
               <div key={member.name} className={`group relative`}>
