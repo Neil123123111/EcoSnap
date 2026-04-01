@@ -8,3 +8,5 @@ ai_model
 *.zip
 *.h5
 .DS_Store
+.env.example
+.env

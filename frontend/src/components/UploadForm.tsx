@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import AIResult from "./AIResult";
 import HeatmapCanvas from "./HeatmapCanvas";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8001";
 
 export default function UploadForm() {
   const [files, setFiles] = useState<File[]>([]);

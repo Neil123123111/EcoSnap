@@ -3,6 +3,7 @@ import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import UploadEvidencePage from "./pages/UploadEvidencePage";
+import Dashboard from "./pages/Dashboard";
 import { AuthProvider } from "./context/AuthContext";
 
 function AppRoutes() {
@@ -12,6 +13,7 @@ function AppRoutes() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/upload" element={<UploadEvidencePage />} />
+      <Route path="/dashboard" element={<Dashboard />} />
     </Routes>
   );
 }

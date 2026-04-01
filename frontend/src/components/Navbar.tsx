@@ -153,6 +153,13 @@ const Navbar = () => {
             </button>
 
             <button
+              onClick={() => goTo("/dashboard")}
+              className="flex w-full items-center rounded-xl px-4 py-3 text-left text-gray-800 transition hover:bg-green-50 dark:text-white dark:hover:bg-gray-800"
+            >
+              Dashboard
+            </button>
+
+            <button
               onClick={() => {
                 toggleTheme();
                 closeMenu();

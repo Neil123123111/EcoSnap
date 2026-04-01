@@ -126,13 +126,15 @@ export default function UploadEvidencePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-white dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50 text-gray-900 transition-colors dark:from-gray-950 dark:via-gray-900 dark:to-slate-900 dark:text-gray-100">
       <Navbar />
 
       {/* HERO SECTION */}
       <section className="pt-20 pb-10 px-6 text-center">
-        <h1 className="text-4xl md:text-5xl font-bold mb-4">Report Environmental Evidence</h1>
-        <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+        <h1 className="text-4xl md:text-5xl font-bold mb-4 text-gray-900 dark:text-white">
+          Report Environmental Evidence
+        </h1>
+        <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
           Upload images, record voice descriptions, and let our AI analyze environmental violations in your area.
         </p>
       </section>
@@ -156,12 +158,12 @@ export default function UploadEvidencePage() {
           <div className="lg:col-span-2 space-y-6">
             {/* STEP 1: UPLOAD IMAGE */}
             <div>
-              <Card className="p-6">
-                <h2 className="text-2xl font-bold mb-4">1️⃣ Upload Evidence</h2>
+              <Card className="p-6 border border-gray-200/80 dark:border-gray-700 dark:bg-gray-800/95">
+                <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">1️⃣ Upload Evidence</h2>
 
                 {/* FILE UPLOAD */}
                 <div
-                  className="border-2 border-dashed border-green-400 rounded-lg p-8 text-center cursor-pointer hover:bg-green-50 dark:hover:bg-green-900/20 transition"
+                  className="rounded-lg border-2 border-dashed border-green-400 bg-white/70 p-8 text-center text-gray-800 transition hover:bg-green-50 dark:bg-gray-900/40 dark:text-gray-100 dark:hover:bg-green-900/20"
                   onDragOver={(e) => e.preventDefault()}
                   onDrop={(e) => {
                     e.preventDefault();
@@ -177,15 +179,15 @@ export default function UploadEvidencePage() {
                   />
                   <label htmlFor="file-input" className="cursor-pointer block">
                     <p className="text-3xl mb-2">📸</p>
-                    <p className="font-semibold mb-1">Drag and drop or click to upload</p>
-                    <p className="text-sm text-gray-500">Supports images and videos up to 50MB</p>
+                    <p className="mb-1 font-semibold text-gray-900 dark:text-white">Drag and drop or click to upload</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-300">Supports images and videos up to 50MB</p>
                   </label>
                 </div>
 
                 {/* PREVIEW */}
                 {preview.length > 0 && (
                   <div className="mt-6 space-y-4">
-                    <h3 className="font-semibold">Preview ({preview.length})</h3>
+                    <h3 className="font-semibold text-gray-900 dark:text-white">Preview ({preview.length})</h3>
                     <div className="grid grid-cols-2 gap-4">
                       {preview.map((src, idx) => (
                         <div
@@ -211,16 +213,16 @@ export default function UploadEvidencePage() {
 
             {/* STEP 2: VOICE INPUT */}
             <div>
-              <Card className="p-6">
-                <h2 className="text-2xl font-bold mb-4">2️⃣ Add Voice Description (Optional)</h2>
+              <Card className="p-6 border border-gray-200/80 dark:border-gray-700 dark:bg-gray-800/95">
+                <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">2️⃣ Add Voice Description (Optional)</h2>
                 <VoiceInput onTranscript={setTranscript} isRecording={isRecording} setIsRecording={setIsRecording} />
               </Card>
             </div>
 
             {/* STEP 3: AI ANALYSIS */}
             <div>
-              <Card className="p-6">
-                <h2 className="text-2xl font-bold mb-4">3️⃣ AI Analysis</h2>
+              <Card className="p-6 border border-gray-200/80 dark:border-gray-700 dark:bg-gray-800/95">
+                <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">3️⃣ AI Analysis</h2>
                 <button
                   onClick={handleAnalyze}
                   disabled={files.length === 0 || isAnalyzing}
@@ -230,12 +232,14 @@ export default function UploadEvidencePage() {
                 </button>
 
                 {analysisResult && (
-                  <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                  <div className="mt-6 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950/30">
                     <div className="flex items-center justify-between mb-3">
                       <Badge variant="danger">{analysisResult.severity.toUpperCase()}</Badge>
-                      <span className="text-sm font-semibold">{(analysisResult.confidence * 100).toFixed(1)}% confidence</span>
+                      <span className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                        {(analysisResult.confidence * 100).toFixed(1)}% confidence
+                      </span>
                     </div>
-                    <p className="font-semibold mb-2">{analysisResult.label}</p>
+                    <p className="font-semibold mb-2 text-gray-900 dark:text-white">{analysisResult.label}</p>
                     <p className="text-sm text-gray-700 dark:text-gray-300">{analysisResult.description}</p>
                   </div>
                 )}
@@ -245,8 +249,8 @@ export default function UploadEvidencePage() {
             {/* STEP 4: SUBMIT */}
             {analysisResult && (
               <div>
-                <Card className="p-6 bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/10 dark:to-blue-900/10">
-                  <h2 className="text-2xl font-bold mb-4">4️⃣ Submit Report</h2>
+                <Card className="border border-green-200/80 bg-gradient-to-r from-green-50 to-blue-50 p-6 dark:border-green-900/60 dark:from-green-950/30 dark:to-blue-950/30">
+                  <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">4️⃣ Submit Report</h2>
                   <button
 
                     onClick={handleSubmitReport}

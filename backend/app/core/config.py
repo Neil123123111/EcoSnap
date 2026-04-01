@@ -1,8 +1,11 @@
-from dotenv import load_dotenv
 import os
+from pathlib import Path
 
-# load .env
-load_dotenv()
+from dotenv import load_dotenv
+
+# Always load backend/.env regardless of current working directory.
+BACKEND_ROOT = Path(__file__).resolve().parents[2]
+load_dotenv(BACKEND_ROOT / ".env")
 
 
 class Settings:
@@ -27,7 +30,7 @@ class Settings:
     # ========================
     BASE_URL: str = os.getenv(
         "BASE_URL",
-        "http://127.0.0.1:8000"
+        "http://localhost:8001"
     )
 
     # ========================
@@ -36,6 +39,21 @@ class Settings:
     SECRET_KEY: str = os.getenv(
         "SECRET_KEY",
         "super-secret-key"
+    )
+
+    IQAIR_API_KEY: str = os.getenv(
+        "IQAIR_API_KEY",
+        ""
+    )
+
+    IQAIR_BASE_URL: str = os.getenv(
+        "IQAIR_BASE_URL",
+        "https://api.airvisual.com/v2"
+    )
+
+    OPEN_METEO_AIR_QUALITY_BASE_URL: str = os.getenv(
+        "OPEN_METEO_AIR_QUALITY_BASE_URL",
+        "https://air-quality-api.open-meteo.com/v1"
     )
 
     # ========================
