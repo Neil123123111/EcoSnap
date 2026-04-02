@@ -537,175 +537,7 @@ export default function Dashboard() {
           </Card>
         </section>
 
-        <section className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
-          <div className="space-y-6">
-            <Card className="rounded-[28px] border border-slate-200/80 bg-white/90 p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/80" hover={false}>
-              <div className="mb-3 text-3xl font-bold text-slate-900 dark:text-white">Dự báo theo giờ</div>
-              <p className="mb-6 text-lg text-slate-500 dark:text-slate-400">
-                8 mốc gần nhất từ Open-Meteo để quan sát biến động AQI và PM2.5.
-              </p>
-
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                {forecastCards.map((item) => (
-                  <div key={item.time} className="rounded-3xl border border-slate-200 bg-slate-50/80 p-4 dark:border-slate-700 dark:bg-slate-800/70">
-                    <div className="text-sm text-slate-400">{shortHour(item.time)}</div>
-                    <div className="mt-3 inline-flex rounded-xl bg-yellow-300 px-3 py-1 text-lg font-bold text-slate-900">
-                      {item.aqi ?? "--"}
-                    </div>
-                    <div className="mt-4 flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
-                      <CloudSun className="h-4 w-4 text-amber-500" />
-                      PM2.5: {item.pm25 !== null && item.pm25 !== undefined ? `${item.pm25} µg/m³` : "--"}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Card>
-
-            <Card className="rounded-[28px] border border-slate-200/80 bg-white/90 p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/80" hover={false}>
-              <div className="mb-3 text-3xl font-bold text-slate-900 dark:text-white">Report thời gian thực</div>
-              <p className="mb-6 text-lg text-slate-500 dark:text-slate-400">
-                Các report mới nhất lấy trực tiếp từ database EcoSnap.
-              </p>
-
-              <div className="mb-6 grid gap-4 md:grid-cols-3">
-                <div className="rounded-[24px] border border-white/70 bg-gradient-to-br from-sky-100 to-cyan-100 p-4 shadow-sm dark:border-slate-800 dark:from-sky-950/50 dark:to-cyan-950/30">
-                  <div className="flex items-center justify-between">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/80 text-slate-800 dark:bg-slate-900/70 dark:text-white">
-                      <Layers3 className="h-5 w-5" />
-                    </div>
-                    <span className="text-xs uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Tổng report</span>
-                  </div>
-                  <div className="mt-5 text-2xl font-black text-slate-900 dark:text-white">{reports.length}</div>
-                </div>
-
-                <div className="rounded-[24px] border border-white/70 bg-gradient-to-br from-amber-100 to-yellow-100 p-4 shadow-sm dark:border-slate-800 dark:from-amber-950/50 dark:to-yellow-950/30">
-                  <div className="flex items-center justify-between">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/80 text-slate-800 dark:bg-slate-900/70 dark:text-white">
-                      <Sparkles className="h-5 w-5" />
-                    </div>
-                    <span className="text-xs uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Confidence cao</span>
-                  </div>
-                  <div className="mt-5 text-2xl font-black text-slate-900 dark:text-white">{highConfidenceCount}</div>
-                </div>
-
-                <div className="rounded-[24px] border border-white/70 bg-gradient-to-br from-emerald-100 to-lime-100 p-4 shadow-sm dark:border-slate-800 dark:from-emerald-950/50 dark:to-lime-950/30">
-                  <div className="flex items-center justify-between">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/80 text-slate-800 dark:bg-slate-900/70 dark:text-white">
-                      <Camera className="h-5 w-5" />
-                    </div>
-                    <span className="text-xs uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Mới nhất</span>
-                  </div>
-                  <div className="mt-5 text-2xl font-black text-slate-900 dark:text-white">{latestReportTime}</div>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                {reports.length === 0 && !loading && (
-                  <div className="rounded-3xl border border-dashed border-slate-300 px-4 py-6 text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
-                    Chưa có report nào trong database.
-                  </div>
-                )}
-
-                {reports.map((report) => (
-                  <div
-                    key={report.id}
-                    className="group overflow-hidden rounded-[28px] border border-slate-200 bg-white/85 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg dark:border-slate-700 dark:bg-slate-800/70"
-                  >
-                    <div className="grid lg:grid-cols-[0.9fr_1.1fr]">
-                      <div className="relative min-h-[220px] overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(56,189,248,0.35),_transparent_32%),linear-gradient(160deg,_#0f172a_0%,_#1e293b_48%,_#334155_100%)]">
-                        {report.image_url ? (
-                          <img
-                            src={report.image_url}
-                            alt={report.label}
-                            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                          />
-                        ) : (
-                          <div className="flex h-full w-full flex-col items-center justify-center gap-4 text-white/90">
-                            <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-white/10 backdrop-blur">
-                              <ImageIcon className="h-8 w-8" />
-                            </div>
-                            <div className="px-6 text-center">
-                              <div className="text-lg font-semibold">Không có ảnh xem trước</div>
-                              <div className="mt-2 text-sm text-white/70">Report vẫn đang hiển thị trực tiếp từ database.</div>
-                            </div>
-                          </div>
-                        )}
-
-                        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/85 to-transparent p-5 text-white">
-                          <div className="flex items-center justify-between gap-3">
-                            <div>
-                              <div className="text-xl font-bold capitalize">{report.label}</div>
-                              <div className="mt-1 text-sm text-white/70">Report #{report.id}</div>
-                            </div>
-                            <Badge variant={confidenceTone(report.confidence)}>
-                              {Math.round(report.confidence * 100)}%
-                            </Badge>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex flex-col justify-between p-5">
-                        <div>
-                          <div className="mb-4 flex flex-wrap items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
-                            <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 dark:bg-slate-700/70">
-                              <Clock3 className="h-4 w-4" />
-                              {timeAgo(report.created_at)}
-                            </span>
-                            <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 dark:bg-slate-700/70">
-                              <Activity className="h-4 w-4" />
-                              {formatTimestamp(report.created_at)}
-                            </span>
-                          </div>
-
-                          <div className="grid gap-3 sm:grid-cols-2">
-                            <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-900/50">
-                              <div className="text-xs uppercase tracking-[0.16em] text-slate-400">Loại phát hiện</div>
-                              <div className="mt-2 text-lg font-bold capitalize text-slate-900 dark:text-white">
-                                {report.label}
-                              </div>
-                            </div>
-                            <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-900/50">
-                              <div className="text-xs uppercase tracking-[0.16em] text-slate-400">Độ tin cậy</div>
-                              <div className="mt-2 text-lg font-bold text-slate-900 dark:text-white">
-                                {Math.round(report.confidence * 100)}%
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="mt-4 rounded-2xl border border-slate-200 bg-white px-4 py-4 text-sm leading-7 text-slate-600 dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-300">
-                            Report này có thể dùng để đối chiếu với AQI hiện tại, nồng độ chất ô nhiễm và các biến động trong lịch sử gần đây.
-                          </div>
-                        </div>
-
-                        <div className="mt-5 flex flex-wrap items-center gap-3">
-                          <a
-                            href={report.image_url || "#"}
-                            target={report.image_url ? "_blank" : undefined}
-                            rel={report.image_url ? "noreferrer" : undefined}
-                            className={`inline-flex items-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold transition ${
-                              report.image_url
-                                ? "bg-slate-900 text-white hover:bg-slate-700 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
-                                : "cursor-not-allowed bg-slate-200 text-slate-500 dark:bg-slate-700 dark:text-slate-400"
-                            }`}
-                          >
-                            <ImageIcon className="h-4 w-4" />
-                            {report.image_url ? "Xem ảnh report" : "Không có ảnh"}
-                          </a>
-
-                          <div className="inline-flex items-center gap-2 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
-                            <Sparkles className="h-4 w-4" />
-                            Đồng bộ thời gian thực
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Card>
-          </div>
-
-          <div className="space-y-6">
+        <section className="space-y-6">
             <Card className="rounded-[28px] border border-slate-200/80 bg-white/90 p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/80" hover={false}>
               <div className="mb-3 text-3xl font-bold text-slate-900 dark:text-white">Chất gây ô nhiễm không khí</div>
               <p className="mb-6 text-lg text-slate-500 dark:text-slate-400">
@@ -779,7 +611,173 @@ export default function Dashboard() {
                 </div>
               )}
             </Card>
-          </div>
+        </section>
+
+        <section className="mt-6 space-y-6">
+          <Card className="rounded-[28px] border border-slate-200/80 bg-white/90 p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/80" hover={false}>
+            <div className="mb-3 text-3xl font-bold text-slate-900 dark:text-white">Dự báo theo giờ</div>
+            <p className="mb-6 text-lg text-slate-500 dark:text-slate-400">
+              8 mốc gần nhất từ Open-Meteo để quan sát biến động AQI và PM2.5.
+            </p>
+
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              {forecastCards.map((item) => (
+                <div key={item.time} className="rounded-3xl border border-slate-200 bg-slate-50/80 p-4 dark:border-slate-700 dark:bg-slate-800/70">
+                  <div className="text-sm text-slate-400">{shortHour(item.time)}</div>
+                  <div className="mt-3 inline-flex rounded-xl bg-yellow-300 px-3 py-1 text-lg font-bold text-slate-900">
+                    {item.aqi ?? "--"}
+                  </div>
+                  <div className="mt-4 flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+                    <CloudSun className="h-4 w-4 text-amber-500" />
+                    PM2.5: {item.pm25 !== null && item.pm25 !== undefined ? `${item.pm25} µg/m³` : "--"}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+
+          <Card className="rounded-[28px] border border-slate-200/80 bg-white/90 p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/80" hover={false}>
+            <div className="mb-3 text-3xl font-bold text-slate-900 dark:text-white">Report thời gian thực</div>
+            <p className="mb-6 text-lg text-slate-500 dark:text-slate-400">
+              Các report mới nhất lấy trực tiếp từ database EcoSnap.
+            </p>
+
+            <div className="mb-6 grid gap-4 md:grid-cols-3">
+              <div className="rounded-[24px] border border-white/70 bg-gradient-to-br from-sky-100 to-cyan-100 p-4 shadow-sm dark:border-slate-800 dark:from-sky-950/50 dark:to-cyan-950/30">
+                <div className="flex items-center justify-between">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/80 text-slate-800 dark:bg-slate-900/70 dark:text-white">
+                    <Layers3 className="h-5 w-5" />
+                  </div>
+                  <span className="text-xs uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Tổng report</span>
+                </div>
+                <div className="mt-5 text-2xl font-black text-slate-900 dark:text-white">{reports.length}</div>
+              </div>
+
+              <div className="rounded-[24px] border border-white/70 bg-gradient-to-br from-amber-100 to-yellow-100 p-4 shadow-sm dark:border-slate-800 dark:from-amber-950/50 dark:to-yellow-950/30">
+                <div className="flex items-center justify-between">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/80 text-slate-800 dark:bg-slate-900/70 dark:text-white">
+                    <Sparkles className="h-5 w-5" />
+                  </div>
+                  <span className="text-xs uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Confidence cao</span>
+                </div>
+                <div className="mt-5 text-2xl font-black text-slate-900 dark:text-white">{highConfidenceCount}</div>
+              </div>
+
+              <div className="rounded-[24px] border border-white/70 bg-gradient-to-br from-emerald-100 to-lime-100 p-4 shadow-sm dark:border-slate-800 dark:from-emerald-950/50 dark:to-lime-950/30">
+                <div className="flex items-center justify-between">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/80 text-slate-800 dark:bg-slate-900/70 dark:text-white">
+                    <Camera className="h-5 w-5" />
+                  </div>
+                  <span className="text-xs uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Mới nhất</span>
+                </div>
+                <div className="mt-5 text-2xl font-black text-slate-900 dark:text-white">{latestReportTime}</div>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              {reports.length === 0 && !loading && (
+                <div className="rounded-3xl border border-dashed border-slate-300 px-4 py-6 text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
+                  Chưa có report nào trong database.
+                </div>
+              )}
+
+              {reports.map((report) => (
+                <div
+                  key={report.id}
+                  className="group overflow-hidden rounded-[28px] border border-slate-200 bg-white/85 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg dark:border-slate-700 dark:bg-slate-800/70"
+                >
+                  <div className="grid lg:grid-cols-[0.9fr_1.1fr]">
+                    <div className="relative min-h-[220px] overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(56,189,248,0.35),_transparent_32%),linear-gradient(160deg,_#0f172a_0%,_#1e293b_48%,_#334155_100%)]">
+                      {report.image_url ? (
+                        <img
+                          src={report.image_url}
+                          alt={report.label}
+                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full flex-col items-center justify-center gap-4 text-white/90">
+                          <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-white/10 backdrop-blur">
+                            <ImageIcon className="h-8 w-8" />
+                          </div>
+                          <div className="px-6 text-center">
+                            <div className="text-lg font-semibold">Không có ảnh xem trước</div>
+                            <div className="mt-2 text-sm text-white/70">Report vẫn đang hiển thị trực tiếp từ database.</div>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/85 to-transparent p-5 text-white">
+                        <div className="flex items-center justify-between gap-3">
+                          <div>
+                            <div className="text-xl font-bold capitalize">{report.label}</div>
+                            <div className="mt-1 text-sm text-white/70">Report #{report.id}</div>
+                          </div>
+                          <Badge variant={confidenceTone(report.confidence)}>
+                            {Math.round(report.confidence * 100)}%
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col justify-between p-5">
+                      <div>
+                        <div className="mb-4 flex flex-wrap items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
+                          <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 dark:bg-slate-700/70">
+                            <Clock3 className="h-4 w-4" />
+                            {timeAgo(report.created_at)}
+                          </span>
+                          <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 dark:bg-slate-700/70">
+                            <Activity className="h-4 w-4" />
+                            {formatTimestamp(report.created_at)}
+                          </span>
+                        </div>
+
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-900/50">
+                            <div className="text-xs uppercase tracking-[0.16em] text-slate-400">Loại phát hiện</div>
+                            <div className="mt-2 text-lg font-bold capitalize text-slate-900 dark:text-white">
+                              {report.label}
+                            </div>
+                          </div>
+                          <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-900/50">
+                            <div className="text-xs uppercase tracking-[0.16em] text-slate-400">Độ tin cậy</div>
+                            <div className="mt-2 text-lg font-bold text-slate-900 dark:text-white">
+                              {Math.round(report.confidence * 100)}%
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="mt-4 rounded-2xl border border-slate-200 bg-white px-4 py-4 text-sm leading-7 text-slate-600 dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-300">
+                          Report này có thể dùng để đối chiếu với AQI hiện tại, nồng độ chất ô nhiễm và các biến động trong lịch sử gần đây.
+                        </div>
+                      </div>
+
+                      <div className="mt-5 flex flex-wrap items-center gap-3">
+                        <a
+                          href={report.image_url || "#"}
+                          target={report.image_url ? "_blank" : undefined}
+                          rel={report.image_url ? "noreferrer" : undefined}
+                          className={`inline-flex items-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold transition ${
+                            report.image_url
+                              ? "bg-slate-900 text-white hover:bg-slate-700 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
+                              : "cursor-not-allowed bg-slate-200 text-slate-500 dark:bg-slate-700 dark:text-slate-400"
+                          }`}
+                        >
+                          <ImageIcon className="h-4 w-4" />
+                          {report.image_url ? "Xem ảnh report" : "Không có ảnh"}
+                        </a>
+
+                        <div className="inline-flex items-center gap-2 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
+                          <Sparkles className="h-4 w-4" />
+                          Đồng bộ thời gian thực
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
         </section>
       </main>
     </div>

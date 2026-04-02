@@ -405,7 +405,7 @@ export default function HomePage() {
                 name: "Võ Xuân Hữu",
                 role: "Frontend Developer",
                 bio: "Creating beautiful and responsive user experiences",
-                image: "/src/assets/team/vo-xuan-huu.jpg",
+                image: "/src/assets/team/z7679797812862_33f8f29fb9b5ba534b859209fdcbb00d.jpg",
                 color: "from-pink-400 to-pink-600",
               },
               {
@@ -441,10 +441,7 @@ export default function HomePage() {
                       </div>
                     </div>
 
-                    {/* Icon Badge */}
-                    <div className="absolute -bottom-2 -right-2 w-20 h-20 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full flex items-center justify-center text-4xl shadow-lg transform group-hover:scale-110 transition-transform duration-500">
-                      {member.icon}
-                    </div>
+
                   </div>
 
                   {/* Info Section */}

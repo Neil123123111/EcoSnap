@@ -39,7 +39,7 @@ export default function UploadForm() {
 
       const data = await res.json();
 
-      // 🔥 convert boxes backend → format HeatmapCanvas
+      // convert boxes backend → format HeatmapCanvas
       const boxes =
         data.boxes?.map((b: any) => ({
           x: b.x1,
