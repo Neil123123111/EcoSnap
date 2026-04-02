@@ -29,7 +29,7 @@ export default function HeroVideo({ onScrollToUpload }: Props) {
           transition-opacity duration-700
           ${isLoaded ? "opacity-100" : "opacity-0"}
         `}
-        src="/videos/1851190-uhd_3840_2160_25fps.mp4"   // ✅ dùng public
+        src="/videos/1851190-uhd_3840_2160_25fps.mp4"   
         autoPlay
         loop
         muted

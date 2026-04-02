@@ -54,7 +54,7 @@ export default function AIResult({
         </span>
       </div>
 
-      {/* 🔥 confidence */}
+      {/* confidence */}
       {confidence !== undefined && (
         <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
           Confidence: {(confidence * 100).toFixed(2)}%

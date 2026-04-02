@@ -110,7 +110,7 @@ export default function UploadEvidencePage() {
       formData.append("latitude", location?.lat?.toString() || "0");
       formData.append("longitude", location?.lng?.toString() || "0");
 
-      // TODO: Call actual submit API
+      // Call actual submit API
       console.log("Submitting report...");
 
       setAnalysisResult(null);

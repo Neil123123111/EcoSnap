@@ -1,10 +1,10 @@
-# 🚀 EcoSnap - Production Deployment Guide
+# EcoSnap - Production Deployment Guide
 
 Comprehensive guide for deploying EcoSnap to production environments.
 
 ---
 
-## 🎯 Deployment Options
+## Deployment Options
 
 ### 1. Cloud Platforms
 - **Backend**: Heroku, Railway, DigitalOcean, AWS, Google Cloud
@@ -18,7 +18,7 @@ Comprehensive guide for deploying EcoSnap to production environments.
 
 ---
 
-## 📦 Pre-Deployment Checklist
+## Pre-Deployment Checklist
 
 - ✅ All tests passing
 - ✅ No console errors/warnings (frontend)
@@ -31,7 +31,7 @@ Comprehensive guide for deploying EcoSnap to production environments.
 
 ---
 
-## 🌐 Backend Deployment
+## Backend Deployment
 
 ### Option 1: Heroku
 
