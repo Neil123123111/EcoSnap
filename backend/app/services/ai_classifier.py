@@ -22,13 +22,13 @@ TRASH_CLASSES = [
 
 # Map YOLO World class names → simplified category labels
 CATEGORY_MAP = {
-    "plastic bottle": "plastic",
-    "plastic bag": "plastic",
-    "styrofoam": "plastic",
-    "glass bottle": "glass",
+    "plastic bottle": "bottle",
+    "plastic bag": "bag",
+    "styrofoam": "styrofoam",
+    "glass bottle": "glass bottle",
     "cardboard": "cardboard",
     "paper": "paper",
-    "metal can": "metal",
+    "metal can": "can",
     "trash": "trash",
     "food waste": "trash",
     "cigarette": "trash",
