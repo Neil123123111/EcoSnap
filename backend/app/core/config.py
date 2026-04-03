@@ -57,6 +57,49 @@ class Settings:
     )
 
     # ========================
+    # ROBOFLOW TRAINING
+    # ========================
+    ROBOFLOW_API_KEY: str = os.getenv(
+        "ROBOFLOW_API_KEY",
+        "dQDfZWUMCHn8KqidqS9o"
+    )
+
+    ROBOFLOW_WORKSPACE: str = os.getenv(
+        "ROBOFLOW_WORKSPACE",
+        "neil-c8awa"
+    )
+
+    ROBOFLOW_PROJECT: str = os.getenv(
+        "ROBOFLOW_PROJECT",
+        ""
+    )
+
+    ROBOFLOW_VERSION: int = int(os.getenv("ROBOFLOW_VERSION", "1"))
+
+    ROBOFLOW_FORMAT: str = os.getenv(
+        "ROBOFLOW_FORMAT",
+        "folder"
+    )
+
+    # ========================
+    # YOLO WORLD INFERENCE
+    # ========================
+    YOLO_WORLD_API_URL: str = os.getenv(
+        "YOLO_WORLD_API_URL",
+        "https://serverless.roboflow.com"
+    )
+
+    YOLO_WORLD_WORKFLOW_ID: str = os.getenv(
+        "YOLO_WORLD_WORKFLOW_ID",
+        "yolo-world-small-demo"
+    )
+
+    TRAINED_CLASSIFIER_MODEL_PATH: str = os.getenv(
+        "TRAINED_CLASSIFIER_MODEL_PATH",
+        "runs/ecosnap_8_classes/weights/best.pt"
+    )
+
+    # ========================
     # DEBUG
     # ========================
     DEBUG: bool = os.getenv("DEBUG", "True") == "True"

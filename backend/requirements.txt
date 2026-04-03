@@ -19,10 +19,10 @@ pydantic==2.5.0
 pydantic[email]==2.5.0
 
 # AI/ML Models
-tensorflow==2.16.2
 ultralytics==8.0.216
+roboflow==1.1.58
 pillow==10.1.0
-numpy==1.24.3
+inference-sdk>=0.9.0
 
 # Environment Variables
 python-dotenv==1.0.0

@@ -1,4 +1,5 @@
 from pydantic import BaseModel, EmailStr
+from typing import Optional
 
 
 class UserRegister(BaseModel):
@@ -16,6 +17,8 @@ class UserResponse(BaseModel):
     id: int
     email: str
     username: str
+    display_name: Optional[str] = None
+    avatar_url: Optional[str] = None
 
     class Config:
         from_attributes = True

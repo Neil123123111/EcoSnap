@@ -10,4 +10,7 @@ class Report(Base):
     image_url = Column(String)
     label = Column(String)
     confidence = Column(Float)
+    transcript = Column(String, nullable=True)
+    latitude = Column(Float, nullable=True)
+    longitude = Column(Float, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
