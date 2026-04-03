@@ -1,10 +1,8 @@
-import { useState } from "react";
+import { useState, type SyntheticEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
-
-
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8001";
+import { registerUser } from "../services/api";
 
 export default function RegisterPage() {
   const [email, setEmail] = useState("");
@@ -12,42 +10,26 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
   const navigate = useNavigate();
   const { login } = useAuth();
   const { showToast } = useToast();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError("");
 
     if (password !== confirmPassword) {
-      setError("Passwords don't match");
       showToast("warning", "Mật khẩu chưa khớp", "Hãy kiểm tra lại password và confirm password.");
       return;
     }
 
     setLoading(true);
-
     try {
-      const res = await fetch(`${API_URL}/auth/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, username, password }),
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.detail || "Registration failed");
-      }
-
-      const data = await res.json();
+      const data = await registerUser(email, username, password);
       login(data.access_token, data.user);
       showToast("success", "Tạo tài khoản thành công", `Xin chào ${data.user.username}, tài khoản của bạn đã sẵn sàng.`);
       navigate("/dashboard");
     } catch (err) {
       const message = err instanceof Error ? err.message : "Registration failed";
-      setError(message);
       showToast("danger", "Đăng ký thất bại", message);
     } finally {
       setLoading(false);
@@ -63,14 +45,14 @@ export default function RegisterPage() {
         <p className="text-center text-gray-600 dark:text-gray-400 mb-8">
           Create an account to report environmental issues
         </p>
-        {error && <div className="mb-4 text-sm text-red-600 dark:text-red-400">{error}</div>}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Email
             </label>
             <input
+              id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -81,10 +63,11 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label htmlFor="reg-username" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Username
             </label>
             <input
+              id="reg-username"
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
@@ -95,10 +78,11 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label htmlFor="reg-password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Password
             </label>
             <input
+              id="reg-password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -109,10 +93,11 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label htmlFor="reg-confirm" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Confirm Password
             </label>
             <input
+              id="reg-confirm"
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}

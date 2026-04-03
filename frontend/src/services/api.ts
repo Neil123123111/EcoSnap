@@ -1,5 +1,48 @@
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8001";
 
+// ─── Auth types ───────────────────────────────────────────────────────────────
+
+export interface AuthUser {
+  id: number;
+  email: string;
+  username: string;
+  display_name?: string;
+  avatar_url?: string;
+}
+
+export interface AuthResponse {
+  access_token: string;
+  token_type: string;
+  user: AuthUser;
+}
+
+export const loginUser = async (username: string, password: string): Promise<AuthResponse> => {
+  const res = await fetch(`${API_URL}/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, password }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.detail || "Login failed");
+  return data as AuthResponse;
+};
+
+export const registerUser = async (
+  email: string,
+  username: string,
+  password: string
+): Promise<AuthResponse> => {
+  const res = await fetch(`${API_URL}/auth/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, username, password }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.detail || "Registration failed");
+  return data as AuthResponse;
+};
+
+
 export interface TopPredictionPayload {
   label: string;
   confidence: number;

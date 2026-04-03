@@ -1,43 +1,27 @@
-import { useState } from "react";
+import { useState, type SyntheticEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
-
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8001";
+import { loginUser } from "../services/api";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
   const navigate = useNavigate();
   const { login } = useAuth();
   const { showToast } = useToast();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError("");
     setLoading(true);
-
     try {
-      const res = await fetch(`${API_URL}/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.detail || "Login failed");
-      }
-
-      const data = await res.json();
+      const data = await loginUser(username, password);
       login(data.access_token, data.user);
       showToast("success", "Đăng nhập thành công", `Chào mừng quay lại, ${data.user.username}.`);
       navigate("/");
     } catch (err) {
       const message = err instanceof Error ? err.message : "Login failed";
-      setError(message);
       showToast("danger", "Đăng nhập thất bại", message);
     } finally {
       setLoading(false);
@@ -53,14 +37,14 @@ export default function LoginPage() {
         <p className="text-center text-gray-600 dark:text-gray-400 mb-8">
           Login to EcoSnap to report environmental issues
         </p>
-        {error && <div className="mb-4 text-sm text-red-600 dark:text-red-400">{error}</div>}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label htmlFor="username" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Username
             </label>
             <input
+              id="username"
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
@@ -71,10 +55,11 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Password
             </label>
             <input
+              id="password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
