@@ -1,107 +1,109 @@
-# 🌱 EcoSnap - Environmental Issue Reporting Platform
+# 🌱 EcoSnap — Environmental AI Platform
 
-A modern web application for reporting environmental violations with AI-powered analysis. Users upload images of environmental issues (trash, pollution, etc.), and the system automatically categorizes and analyzes them using computer vision models.
-
----
-
-## 🎯 Features
-
-### Core Features
-- **🖼️ Image Upload & Analysis** - Upload images of environmental issues for AI analysis
-- **🤖 AI Detection** - YOLOv8 object detection for identifying trash and environmental hazards
-- **🔍 Classification** - ML model classification of waste types (cardboard, glass, metal, plastic, paper, trash)
-- **📍 Location Mapping** - Interactive map showing reported issues with heatmap visualization
-- **🔐 User Authentication** - JWT-based authentication with login/registration
-- **📊 Dashboard** - User dashboard with report history and analytics
-- **🎨 Dark Mode** - Light/dark theme support
-- **📱 Responsive Design** - Mobile-optimized interface
-
-### Backend Architecture
-- **Framework**: FastAPI + Uvicorn
-- **Database**: PostgreSQL with SQLAlchemy ORM
-- **ML Models**: TensorFlow/Keras + YOLOv8
-- **Authentication**: JWT tokens with bcrypt hashing
-- **API**: RESTful endpoints with CORS support
-
-### Frontend Architecture
-- **Framework**: React 19 + TypeScript
-- **Build Tool**: Vite
-- **Styling**: Tailwind CSS
-- **State Management**: Context API for authentication
-- **Routing**: React Router v7
-- **Animations**: Framer Motion
-- **Maps**: React Leaflet with OpenStreetMap
+EcoSnap is a full-stack web application for reporting and analyzing environmental violations. Users submit images of environmental issues — littering, illegal dumping, pollution — and the system runs AI-powered object detection and waste classification to automatically identify and categorize the problem. Reports are geolocated, visualized on a heatmap, and shared with a community feed to drive collective action.
 
 ---
 
-## 📋 System Requirements
+## ✨ Features
+
+| Feature | Description |
+|---|---|
+| **AI Classification** | YOLOv8 object detection + custom 8-class waste classifier (cardboard, glass, metal, paper, plastic, trash, and more) |
+| **Evidence Upload** | Upload images with optional voice transcript and GPS coordinates |
+| **Danger Zone Map** | Interactive Leaflet heatmap showing concentration of environmental reports |
+| **Air Quality** | Real-time AQI data via IQAir API + hourly timeline via Open-Meteo |
+| **Community Feed** | Post, like, and comment on environmental reports |
+| **Dashboard** | Personal report history with stats |
+| **User Profiles** | Avatar upload, display name, password change |
+| **Dark Mode** | Full light/dark theme with persisted preference |
+| **JWT Auth** | Secure login/register with bcrypt-hashed passwords |
+
+---
+
+## 🏗️ Tech Stack
+
+### Backend
+| Layer | Technology |
+|---|---|
+| Framework | FastAPI + Uvicorn |
+| Database | PostgreSQL + SQLAlchemy ORM |
+| Auth | JWT (python-jose) + bcrypt |
+| AI / ML | YOLOv8 (ultralytics) + custom Roboflow classifier |
+| Air Quality | IQAir API + Open-Meteo Air Quality API |
+| Validation | Pydantic v2 |
+
+### Frontend
+| Layer | Technology |
+|---|---|
+| Framework | React 19 + TypeScript |
+| Build | Vite 8 |
+| Styling | Tailwind CSS 3 |
+| Routing | React Router v7 |
+| Animations | Framer Motion |
+| Maps | React Leaflet + OpenStreetMap |
+| Icons | lucide-react |
+
+---
+
+## 📋 Requirements
 
 ### Backend
 - Python 3.9+
 - PostgreSQL 12+
-- 2GB RAM minimum
-- Model files: `yolov8n.pt`, `keras_model.h5`
+- Model weights: `yolov8n.pt` and `best.pt` (custom classifier) in `backend/app/services/`
 
 ### Frontend
-- Node.js 16+
-- npm 8+ or yarn 1.22+
-- Modern browser (Chrome, Safari, Firefox, Edge)
+- Node.js 18+
+- npm 9+
 
 ---
 
 ## 🚀 Quick Start
 
-### 1. Clone Repository
+### 1. Clone
+
 ```bash
 git clone <repository-url>
 cd EcoSnap
 ```
 
-### 2. Setup Backend
+### 2. Backend
 
 ```bash
 cd backend
 
-# Create virtual environment
+# Create and activate virtual environment
 python3 -m venv venv
-
-# Activate (macOS/Linux)
-source venv/bin/activate
-
-# Activate (Windows)
-venv\Scripts\Activate.ps1
+source venv/bin/activate          # macOS / Linux
+# venv\Scripts\Activate.ps1       # Windows
 
 # Install dependencies
 pip install -r requirements.txt
 
-# Create .env file
+# Configure environment
 cp .env.example .env
+# Edit .env with your PostgreSQL credentials and API keys (see Environment Variables below)
 
-# Update .env with your PostgreSQL credentials
-# DATABASE_URL=postgresql://user:password@localhost:5432/ecosnap
-
-# Start backend
-uvicorn app.main:app --reload --port 8000
+# Start server
+uvicorn app.main:app --reload --port 8001
 ```
 
-### 3. Setup Frontend
+The API will be available at `http://localhost:8001`  
+Interactive docs: `http://localhost:8001/docs`
+
+### 3. Frontend
 
 ```bash
 cd frontend
-
-# Install dependencies
 npm install
 
-# Create .env file
-cp .env.example .env
-# VITE_API_URL=http://localhost:8000
+# Configure environment
+echo "VITE_API_URL=http://localhost:8001" > .env
 
-# Start dev server
 npm run dev
 ```
 
-Backend will be available at: `http://localhost:8000`  
-Frontend will be available at: `http://localhost:5173`
+The app will be available at `http://localhost:5173`
 
 ---
 
@@ -111,242 +113,177 @@ Frontend will be available at: `http://localhost:5173`
 EcoSnap/
 ├── backend/
 │   ├── app/
-│   │   ├── routes/
-│   │   │   ├── auth.py          # JWT authentication endpoints
-│   │   │   ├── report.py        # Image upload & analysis
-│   │   │   └── health.py        # Health check endpoint
-│   │   ├── models/
-│   │   │   ├── user.py          # User database model
-│   │   │   └── report.py        # Report database model
-│   │   ├── schemas/
-│   │   │   ├── user.py          # Pydantic user schemas
-│   │   │   └── report.py        # Pydantic report schemas
-│   │   ├── services/
-│   │   │   ├── ai.py            # AI inference logic
-│   │   │   ├── ai_yolo.py       # YOLOv8 object detection
-│   │   │   └── ...
+│   │   ├── main.py               # App entry point, CORS, DB migrations
 │   │   ├── core/
-│   │   │   ├── database.py      # Database connection
-│   │   │   ├── config.py        # Configuration management
-│   │   │   └── security.py      # JWT & password hashing
-│   │   ├── ai_model/
-│   │   │   └── keras_model.h5   # Pre-trained classification model
-│   │   └── main.py              # FastAPI app initialization
-│   ├── requirements.txt          # Python dependencies
-│   ├── .env.example             # Environment variables template
-│   └── yolov8n.pt              # YOLOv8 model weights
+│   │   │   ├── config.py         # Settings from .env
+│   │   │   ├── database.py       # SQLAlchemy engine & session
+│   │   │   └── security.py       # JWT creation/verification, bcrypt
+│   │   ├── models/
+│   │   │   ├── user.py           # User ORM model
+│   │   │   ├── report.py         # Report ORM model
+│   │   │   └── community.py      # CommunityPost / Comment ORM models
+│   │   ├── schemas/
+│   │   │   ├── user.py           # Pydantic user schemas
+│   │   │   ├── report.py         # Pydantic report schemas
+│   │   │   ├── classifier.py     # AI response schemas
+│   │   │   └── train.py          # Training job schemas
+│   │   ├── routes/
+│   │   │   ├── auth.py           # /auth/* endpoints
+│   │   │   ├── report.py         # /report/* endpoints
+│   │   │   ├── community.py      # /community/* endpoints
+│   │   │   ├── train.py          # /train endpoint
+│   │   │   └── health.py         # /health endpoints
+│   │   ├── services/
+│   │   │   ├── ai.py             # AI orchestration
+│   │   │   ├── ai_classifier.py  # Custom waste classifier
+│   │   │   ├── ai_yolo.py        # YOLOv8 inference
+│   │   │   ├── iqair.py          # IQAir API client
+│   │   │   ├── open_meteo.py     # Open-Meteo API client
+│   │   │   ├── train.py          # YOLOv8 training jobs
+│   │   │   └── best.pt           # Custom classifier weights
+│   │   ├── ai_model/             # Training dataset (Roboflow)
+│   │   └── static/upload/        # Uploaded & annotated images
+│   ├── runs/                     # YOLOv8 training run outputs
+│   ├── yolov8n.pt                # YOLOv8n base weights
+│   └── requirements.txt
 │
 ├── frontend/
 │   ├── src/
-│   │   ├── components/
-│   │   │   ├── Navbar.tsx
-│   │   │   ├── UploadForm.tsx
-│   │   │   ├── AIResult.tsx
-│   │   │   ├── HeatmapCanvas.tsx
-│   │   │   ├── MapView.tsx
-│   │   │   └── ...
 │   │   ├── pages/
 │   │   │   ├── HomePage.tsx
+│   │   │   ├── UploadEvidencePage.tsx
+│   │   │   ├── Dashboard.tsx
+│   │   │   ├── CommunityReportPage.tsx
+│   │   │   ├── ProfilePage.tsx
 │   │   │   ├── LoginPage.tsx
-│   │   │   ├── RegisterPage.tsx
-│   │   │   └── Dashboard.tsx
+│   │   │   └── RegisterPage.tsx
+│   │   ├── components/
+│   │   │   ├── Navbar.tsx
+│   │   │   ├── AIResult.tsx
+│   │   │   ├── UploadForm.tsx
+│   │   │   ├── HeatmapDangerMap.tsx
+│   │   │   ├── DangerZoneDetection.tsx
+│   │   │   ├── CommunityDataTransparency.tsx
+│   │   │   ├── VoiceInput.tsx
+│   │   │   └── ...
 │   │   ├── context/
-│   │   │   ├── AuthContext.tsx  # Authentication state
-│   │   │   └── ThemeContext.tsx # Dark mode state
-│   │   ├── services/
-│   │   │   └── api.ts          # API client
-│   │   ├── App.tsx
-│   │   └── main.tsx
-│   ├── package.json
-│   ├── .env.example
+│   │   │   ├── AuthContext.tsx   # User auth state
+│   │   │   ├── ThemeContext.tsx  # Dark/light mode
+│   │   │   └── ToastContext.tsx  # Global toast notifications
+│   │   └── services/
+│   │       └── api.ts            # Centralized API client
 │   ├── tailwind.config.js
-│   ├── tsconfig.json
-│   └── vite.config.ts
+│   ├── vite.config.ts
+│   └── package.json
 │
-├── scripts/
-│   └── dev.sh                   # Development startup script
-├── README.md                    # This file
-├── SETUP.md                     # Detailed setup guide
-├── LICENSE
-└── package.json                 # Root package.json
+└── scripts/
+    └── dev.sh                    # One-command dev startup
 ```
 
 ---
 
-## 🔌 API Endpoints
+## 🔌 API Reference
 
-### Authentication
-```
-POST   /auth/register          # Register new user
-POST   /auth/login             # Login user
-GET    /auth/me                # Get current user (requires auth)
-```
+### Authentication — `/auth`
+| Method | Path | Description | Auth |
+|---|---|---|---|
+| POST | `/auth/register` | Register new user | — |
+| POST | `/auth/login` | Login, returns JWT | — |
+| GET | `/auth/me` | Get current user | ✓ |
+| PATCH | `/auth/profile` | Update display name, avatar, or password | ✓ |
 
-### Reports
-```
-POST   /report/analyze         # Upload & analyze image
-GET    /report/{id}            # Get report details
-GET    /report/list            # List user's reports
-```
+### Reports — `/report`
+| Method | Path | Description | Auth |
+|---|---|---|---|
+| POST | `/report/classify` | Upload image → AI result (YOLO + classifier) | — |
+| POST | `/report/submit` | Submit a geolocated report | ✓ |
+| GET | `/report/recent` | List recent public reports | — |
+| GET | `/report/model-info` | Classifier metadata | — |
+| GET | `/report/air-quality` | Current AQI for a location | — |
+| GET | `/report/air-quality-timeline` | Hourly AQI forecast | — |
 
-### Health
-```
-GET    /health                 # Backend health check
-```
+### Community — `/community`
+| Method | Path | Description | Auth |
+|---|---|---|---|
+| GET | `/community/posts` | List community posts | — |
+| POST | `/community/posts` | Create a post | ✓ |
+| POST | `/community/posts/{id}/like` | Like / unlike a post | ✓ |
+| DELETE | `/community/posts/{id}` | Delete own post | ✓ |
+| POST | `/community/posts/{id}/comments` | Add comment | ✓ |
+| DELETE | `/community/posts/{id}/comments/{cid}` | Delete own comment | ✓ |
+
+### Health — `/health`
+| Method | Path | Description |
+|---|---|---|
+| GET | `/health` | Liveness check |
+| GET | `/health/db` | Database connectivity check |
 
 ---
 
 ## 🔐 Environment Variables
 
-### Backend (.env)
+### Backend (`backend/.env`)
 ```env
-DATABASE_URL=postgresql://neil@localhost:5432/ecosnap
-BASE_URL=http://localhost:8000
-DEBUG=True
+DATABASE_URL=postgresql://user:password@localhost:5432/ecosnap
+BASE_URL=http://localhost:8001
 SECRET_KEY=your-secret-key-here
+IQAIR_API_KEY=your-iqair-key
+IQAIR_BASE_URL=https://api.airvisual.com/v2
+OPEN_METEO_AIR_QUALITY_BASE_URL=https://air-quality-api.open-meteo.com/v1
 ```
 
-### Frontend (.env)
+### Frontend (`frontend/.env`)
 ```env
-VITE_API_URL=http://localhost:8000
+VITE_API_URL=http://localhost:8001
 ```
 
 ---
 
-## 📦 Dependencies
-
-### Backend
-- **FastAPI** - Modern async web framework
-- **SQLAlchemy** - ORM for database operations
-- **Psycopg2** - PostgreSQL adapter
-- **TensorFlow** - Deep learning framework
-- **YOLOv8** - Real-time object detection
-- **Bcrypt** - Password hashing
-- **Python-JOSE** - JWT token handling
-- **Pydantic** - Data validation
-
-### Frontend
-- **React** - UI library
-- **TypeScript** - Type safety
-- **Tailwind CSS** - Utility-first CSS
-- **React Router** - Client-side routing
-- **Framer Motion** - Animation library
-- **React Leaflet** - Maps integration
-- **Axios** - HTTP client
-
----
-
-## 🧪 Testing
-
-### Backend Testing
-```bash
-cd backend
-pytest tests/
-```
-
-### Frontend Testing
-```bash
-cd frontend
-npm run test
-```
-
----
-
-## 🏗️ Building for Production
+## 🏭 Production Build
 
 ### Backend
 ```bash
 cd backend
-# Run with production ASGI server
-gunicorn app.main:app --workers 4 --worker-class uvicorn.workers.UvicornWorker
+gunicorn app.main:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8001
 ```
 
 ### Frontend
 ```bash
 cd frontend
 npm run build
-npm run preview
+# Serve the generated dist/ folder with any static host (Nginx, Netlify, Vercel, etc.)
 ```
 
 ---
 
 ## 🐛 Troubleshooting
 
-### Backend Connection Issues
+**Backend won't start — database error**
 ```bash
-# Check if backend is running
-curl http://localhost:8000/health
-
-# Check database connection
-psql -h localhost -U neil -d ecosnap
+# Verify PostgreSQL is running and the DB exists
+psql -U postgres -c "CREATE DATABASE ecosnap;"
 ```
 
-### Frontend Build Issues
-```bash
-# Clear node_modules and reinstall
-rm -rf node_modules package-lock.json
-npm install
-npm run dev
-```
+**`yolov8n.pt` / `best.pt` not found**  
+Ensure the model files are present:
+- `backend/yolov8n.pt`
+- `backend/app/services/best.pt`
 
-### Model Loading Issues
-- Ensure `yolov8n.pt` exists in backend root
-- Ensure `keras_model.h5` exists in `backend/app/ai_model/`
-- Check file permissions: `chmod 644 *.pt *.h5`
+**Frontend can't reach backend**  
+Confirm `VITE_API_URL` in `frontend/.env` matches the port your backend is running on (`8001` by default).
 
----
-
-## 📝 Documentation
-
-- [Detailed Setup Guide](./SETUP.md) - Step-by-step installation
-- [Security Policy](./SECURITY.md) - Security considerations
-- API documentation available at: `http://localhost:8000/docs` (Swagger UI)
-
----
-
-## 👥 Contributing
-
-1. Create a feature branch: `git checkout -b feature/your-feature`
-2. Commit changes: `git commit -am 'Add feature'`
-3. Push to branch: `git push origin feature/your-feature`
-4. Open a Pull Request
+**Column missing error after DB upgrade**  
+The app runs automatic migrations on startup via `ensure_report_columns()` and `ensure_user_columns()` in `main.py`. Simply restart the backend.
 
 ---
 
 ## 📄 License
 
-This project is licensed under the MIT License - see [LICENSE](./LICENSE) file for details.
-
----
-
-## 🤝 Support
-
-For issues, bugs, or feature requests, please open an issue on GitHub.
-
----
-
-## 🌍 Deployment
-
-### Deploy Backend (Heroku/Railway)
-```bash
-# Add Procfile
-web: gunicorn app.main:app --workers 4
-
-# Deploy
-git push heroku main
-```
-
-### Deploy Frontend (Netlify/Vercel)
-```bash
-cd frontend
-npm run build
-# Deploy the 'dist' folder to your hosting provider
-```
+MIT — see [LICENSE](./LICENSE)
 
 ---
 
 **Made with 🌱 for environmental protection**
-```
 
 4. Chạy server:
 
