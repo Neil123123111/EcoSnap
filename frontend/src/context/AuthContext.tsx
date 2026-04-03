@@ -5,6 +5,8 @@ interface User {
   id: number;
   email: string;
   username: string;
+  display_name?: string;
+  avatar_url?: string;
 }
 
 interface AuthContextType {
@@ -13,6 +15,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: (token: string, user: User) => void;
   logout: () => void;
+  updateUser: (user: User) => void;
   loading: boolean;
 }
 
@@ -29,8 +32,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const storedUser = localStorage.getItem("user");
 
     if (storedToken && storedUser) {
-      setToken(storedToken);
-      setUser(JSON.parse(storedUser));
+      // Basic check: ensure token is a well-formed JWT (3 parts)
+      const parts = storedToken.split(".");
+      if (parts.length === 3) {
+        setToken(storedToken);
+        setUser(JSON.parse(storedUser));
+      } else {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+      }
     }
 
     setLoading(false);
@@ -50,12 +60,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem("user");
   };
 
+  const updateUser = (updatedUser: User) => {
+    setUser(updatedUser);
+    localStorage.setItem("user", JSON.stringify(updatedUser));
+  };
+
   const value: AuthContextType = {
     user,
     token,
     isAuthenticated: !!token,
     login,
     logout,
+    updateUser,
     loading,
   };
 

@@ -1,87 +1,150 @@
-import React from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { BarChart2, Globe, Heart, Leaf, MapPin, MessageCircle } from "lucide-react";
 import Card from "./Card";
-import Badge from "./Badge";
+import type { CommunityPost } from "../services/api";
 
 interface CommunityDataTransparencyProps {
-  communityReports?: any[];
+  readonly communityReports?: CommunityPost[];
+}
+
+function timeAgo(value?: string | null) {
+  if (!value) return "Unknown";
+  const then = new Date(value).getTime();
+  if (Number.isNaN(then)) return value;
+  const diffMinutes = Math.max(1, Math.round((Date.now() - then) / 60000));
+  if (diffMinutes < 60) return `${diffMinutes} phút trước`;
+  const diffHours = Math.round(diffMinutes / 60);
+  if (diffHours < 24) return `${diffHours} giờ trước`;
+  return `${Math.round(diffHours / 24)} ngày trước`;
+}
+
+const AVATAR_COLORS = [
+  "from-emerald-400 to-teal-500",
+  "from-blue-400 to-indigo-500",
+  "from-violet-400 to-purple-500",
+  "from-rose-400 to-pink-500",
+  "from-amber-400 to-orange-500",
+  "from-cyan-400 to-sky-500",
+];
+
+function MiniAvatar({ name }: Readonly<{ name: string }>) {
+  const idx = (name.codePointAt(0) ?? 0) % AVATAR_COLORS.length;
+  return (
+    <div
+      className={`bg-gradient-to-br ${AVATAR_COLORS[idx]} flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold text-white`}
+    >
+      {name.slice(0, 1).toUpperCase()}
+    </div>
+  );
 }
 
 export default function CommunityDataTransparency({ communityReports = [] }: CommunityDataTransparencyProps) {
-  // Mock data
-  const mockReports = [
-    {
-      id: 1,
-      uploaderName: "Alice Johnson",
-      type: "Pollution",
-      verificationCount: 12,
-      source: "user_upload",
-      timestamp: "2 hours ago",
-      area: "District 1",
-    },
-    {
-      id: 2,
-      uploaderName: "AI Detection",
-      type: "Waste",
-      verificationCount: 8,
-      source: "AI_generated",
-      timestamp: "1 hour ago",
-      area: "District 2",
-    },
-    {
-      id: 3,
-      uploaderName: "Community",
-      type: "Water Contamination",
-      verificationCount: 15,
-      source: "community_verified",
-      timestamp: "30 minutes ago",
-      area: "District 3",
-    },
-  ];
-
-  const getSourcBadge = (source: string) => {
-    const badges: Record<string, { variant: any; label: string }> = {
-      user_upload: { variant: "info", label: "👤 User Upload" },
-      AI_generated: { variant: "success", label: "🤖 AI Generated" },
-      community_verified: { variant: "warning", label: "✓ Community Verified" },
-    };
-    return badges[source] || badges.user_upload;
-  };
+  const navigate = useNavigate();
 
   return (
     <Card className="p-6">
-      <h3 className="font-bold text-lg mb-4">📊 Community Reports ({mockReports.length})</h3>
-
-      <div className="space-y-4 max-h-96 overflow-y-auto">
-        {mockReports.map((report, idx) => (
-          <motion.div
-            key={report.id}
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: idx * 0.1 }}
-            className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border dark:border-gray-600"
-          >
-            <div className="flex items-start justify-between mb-2">
-              <div>
-                <p className="font-semibold text-sm">{report.uploaderName}</p>
-                <p className="text-xs text-gray-500">{report.area} • {report.timestamp}</p>
-              </div>
-              <Badge variant={getSourcBadge(report.source).variant}>
-                {getSourcBadge(report.source).label}
-              </Badge>
-            </div>
-
-            <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">{report.type}</p>
-
-            <div className="flex items-center gap-2 text-xs">
-              <span className="text-green-600 dark:text-green-400">✓ {report.verificationCount} verified</span>
-            </div>
-          </motion.div>
-        ))}
+      {/* Header */}
+      <div className="mb-4 flex items-center justify-between">
+        <h3 className="font-bold text-lg text-gray-900 dark:text-white flex items-center gap-2">
+          <BarChart2 className="h-4 w-4 text-emerald-500" />
+          <span>Community Reports</span>
+          <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-sm font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
+            {communityReports.length}
+          </span>
+        </h3>
+        <button
+          onClick={() => navigate("/community")}
+          className="rounded-lg px-2 py-1 text-xs font-semibold text-blue-600 transition hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-950/30"
+        >
+          Xem tất cả →
+        </button>
       </div>
 
-      <div className="mt-6 pt-4 border-t dark:border-gray-600">
-        <button className="w-full py-2 text-sm font-semibold text-blue-600 dark:text-blue-400 hover:underline">
+      {/* List */}
+      <div className="max-h-96 space-y-2 overflow-y-auto pr-1">
+        {communityReports.length === 0 ? (
+          <div className="flex flex-col items-center gap-2 py-10 text-center">
+            <Leaf className="h-8 w-8 text-emerald-400" />
+            <p className="text-sm text-gray-400 dark:text-gray-500">
+              Chưa có báo cáo nào. Hãy đăng báo cáo đầu tiên!
+            </p>
+          </div>
+        ) : (
+          communityReports.map((post, idx) => {
+            const hasCoords = post.latitude != null && post.longitude != null;
+            const contentPreview = post.content.length > 60
+              ? `${post.content.slice(0, 60)}…`
+              : post.content;
+
+            return (
+              <motion.button
+                key={post.id}
+                initial={{ opacity: 0, x: -12 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: idx * 0.03 }}
+                onClick={() => navigate(`/community#post-${post.id}`)}
+                className="flex w-full items-start gap-3 rounded-xl border border-gray-100 bg-gray-50 p-3 text-left transition hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-700/50 dark:hover:bg-gray-700"
+              >
+                {/* Thumbnail or Avatar */}
+                {post.image_url ? (
+                  <img
+                    src={post.image_url}
+                    alt="post"
+                    className="h-12 w-12 flex-shrink-0 rounded-lg border border-gray-200 object-cover dark:border-gray-600"
+                  />
+                ) : (
+                  <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
+                    <Globe className="h-6 w-6 text-emerald-500" />
+                  </div>
+                )}
+
+                {/* Info */}
+                <div className="min-w-0 flex-1">
+                  {/* Author + time */}
+                  <div className="mb-0.5 flex items-center gap-1.5">
+                    <MiniAvatar name={post.username} />
+                    <span className="truncate text-xs font-semibold text-gray-800 dark:text-gray-200">
+                      {post.username}
+                    </span>
+                    <span className="ml-auto flex-shrink-0 text-[11px] text-gray-400">
+                      {timeAgo(post.created_at)}
+                    </span>
+                  </div>
+
+                  {/* Content preview */}
+                  {post.content && (
+                    <p className="mb-1 text-[12px] leading-snug text-gray-600 dark:text-gray-400">
+                      {contentPreview}
+                    </p>
+                  )}
+
+                  {/* Meta row */}
+                  <div className="flex items-center gap-2 text-[11px] text-gray-400 dark:text-gray-500">
+                    <span className="flex items-center gap-0.5"><Heart className="h-3 w-3 text-rose-400" /> {post.likes}</span>
+                    <span className="flex items-center gap-0.5"><MessageCircle className="h-3 w-3 text-blue-400" /> {post.comments.length}</span>
+                    {hasCoords && (
+                      <span className="flex items-center gap-0.5 truncate text-emerald-500">
+                        <MapPin className="h-3 w-3" /> {post.latitude!.toFixed(2)}, {post.longitude!.toFixed(2)}
+                      </span>
+                    )}
+                    <span className="ml-auto text-gray-300 dark:text-gray-600">
+                      #{post.id}
+                    </span>
+                  </div>
+                </div>
+              </motion.button>
+            );
+          })
+        )}
+      </div>
+
+      {/* Footer */}
+      <div className="mt-4 border-t pt-3 dark:border-gray-700">
+        <button
+          onClick={() => navigate("/community")}
+          className="w-full rounded-xl py-2 text-sm font-semibold text-blue-600 transition hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-950/30"
+        >
           View All Reports →
         </button>
       </div>

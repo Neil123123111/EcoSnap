@@ -425,7 +425,7 @@ async def login(...):
 
 ---
 
-## 📊 Monitoring & Logging
+## Monitoring & Logging
 
 ### Backend Monitoring
 

@@ -1,14 +1,24 @@
 import { useState, useEffect } from "react";
 import AIResult from "./AIResult";
-import HeatmapCanvas from "./HeatmapCanvas";
+import { analyzeTrashImage, type TrashClassificationPayload } from "../services/api";
+import { useToast } from "../context/ToastContext";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8001";
+type UploadFormResult = TrashClassificationPayload & {
+  severity: "low" | "medium" | "high";
+};
 
 export default function UploadForm() {
   const [files, setFiles] = useState<File[]>([]);
   const [preview, setPreview] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<UploadFormResult | null>(null);
+  const { showToast } = useToast();
+
+  const getSeverity = (confidence: number): "low" | "medium" | "high" => {
+    if (confidence >= 0.9) return "high";
+    if (confidence >= 0.7) return "medium";
+    return "low";
+  };
 
   const handleFiles = (selectedFiles: FileList | null) => {
     if (!selectedFiles) return;
@@ -16,48 +26,31 @@ export default function UploadForm() {
     const arr = Array.from(selectedFiles);
     setFiles(arr);
     setPreview(arr.map((f) => URL.createObjectURL(f)));
+    setResult(null);
   };
 
   const handleSubmit = async () => {
-    if (files.length === 0) return;
+    if (files.length === 0) {
+      showToast("warning", "Thiếu ảnh", "Hãy chọn một ảnh trước khi chạy classify.");
+      return;
+    }
 
     setLoading(true);
 
     try {
-      const formData = new FormData();
-      formData.append("file", files[0]); // lấy ảnh đầu tiên
-
-      const res = await fetch(`${API_URL}/report/analyze`, {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({ detail: `HTTP ${res.status}` }));
-        throw new Error(errorData.detail || `API error: ${res.status}`);
-      }
-
-      const data = await res.json();
-
-      // convert boxes backend → format HeatmapCanvas
-      const boxes =
-        data.boxes?.map((b: any) => ({
-          x: b.x1,
-          y: b.y1,
-          width: b.x2 - b.x1,
-          height: b.y2 - b.y1,
-        })) || [];
+      const data = await analyzeTrashImage(files[0]);
 
       setResult({
-        severity: data.label === "trash" ? "high" : "medium",
-        type: data.label,
-        boxes,
-        image_url: data.image_url,
-        confidence: data.confidence,
+        ...data,
+        severity: getSeverity(data.confidence),
       });
     } catch (err) {
       console.error(err);
-      alert(`API error: ${err instanceof Error ? err.message : String(err)}`);
+      showToast(
+        "danger",
+        "Classify thất bại",
+        err instanceof Error ? err.message : String(err)
+      );
     }
 
     setLoading(false);
@@ -100,18 +93,14 @@ export default function UploadForm() {
         />
       </label>
 
-      {/* Preview + Heatmap */}
+      {/* Preview */}
       <div className="grid grid-cols-2 gap-3 mt-4">
         {preview.map((src, i) => (
           <div key={i}>
-            {result ? (
-              <HeatmapCanvas image={src} boxes={result.boxes} />
-            ) : (
-              <img
-                src={src}
-                className="rounded-lg object-cover w-full h-32"
-              />
-            )}
+            <img
+              src={src}
+              className="rounded-lg object-cover w-full h-32"
+            />
           </div>
         ))}
       </div>
@@ -143,9 +132,11 @@ export default function UploadForm() {
         <div id="result" className="mt-4">
           <AIResult
             severity={result.severity}
-            type={result.type}
+            type={result.label}
             confidence={result.confidence}
             image_url={result.image_url}
+            top_predictions={result.top_predictions}
+            model_path={result.model_path}
           />
         </div>
       )}

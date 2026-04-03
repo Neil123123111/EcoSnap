@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
+import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
 import {
   Activity,
-  Camera,
   ChevronRight,
   Clock3,
   CloudSun,
@@ -10,7 +9,6 @@ import {
   HeartPulse,
   ImageIcon,
   Info,
-  Layers3,
   RefreshCcw,
   Search,
   Sparkles,
@@ -25,6 +23,7 @@ import Navbar from "../components/Navbar";
 import Card from "../components/Card";
 import Badge from "../components/Badge";
 import { fetchAirQuality, fetchAirQualityTimeline, fetchRecentReports } from "../services/api";
+import { useToast } from "../context/ToastContext";
 import type {
   AirQualityPayload,
   AirQualityTimelinePayload,
@@ -42,6 +41,19 @@ L.Icon.Default.mergeOptions({
   iconUrl: markerIcon,
   shadowUrl: markerShadow,
 });
+
+const markerPalette = [
+  { fill: "#10b981", halo: "rgba(16,185,129,0.22)" },
+  { fill: "#f97316", halo: "rgba(249,115,22,0.22)" },
+  { fill: "#0ea5e9", halo: "rgba(14,165,233,0.22)" },
+  { fill: "#8b5cf6", halo: "rgba(139,92,246,0.22)" },
+  { fill: "#e11d48", halo: "rgba(225,29,72,0.22)" },
+  { fill: "#eab308", halo: "rgba(234,179,8,0.22)" },
+  { fill: "#14b8a6", halo: "rgba(20,184,166,0.22)" },
+  { fill: "#6366f1", halo: "rgba(99,102,241,0.22)" },
+];
+
+const markerIconCache = new Map<string, L.DivIcon>();
 
 const aqiScale = [
   { max: 50, label: "Tốt", tone: "success" as const, card: "from-emerald-300 to-emerald-400" },
@@ -110,6 +122,14 @@ function confidenceTone(confidence: number) {
   return "info" as const;
 }
 
+function formatCoordinates(latitude?: number | null, longitude?: number | null) {
+  if (latitude === undefined || latitude === null || longitude === undefined || longitude === null) {
+    return "Chưa có tọa độ";
+  }
+
+  return `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+}
+
 function healthAdvice(aqi: number) {
   if (aqi <= 50) {
     return [
@@ -134,7 +154,44 @@ function healthAdvice(aqi: number) {
   ];
 }
 
+function getLabelMarkerStyle(label: string) {
+  const normalized = label.trim().toLowerCase();
+  const hash = Array.from(normalized).reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  return markerPalette[hash % markerPalette.length];
+}
+
+function getReportMarkerIcon(label: string) {
+  const cached = markerIconCache.get(label);
+  if (cached) return cached;
+
+  const style = getLabelMarkerStyle(label);
+  const icon = new L.DivIcon({
+    className: "report-marker-icon",
+    html: `<div style="height:16px;width:16px;border-radius:9999px;border:2px solid #ffffff;background:${style.fill};box-shadow:0 0 0 6px ${style.halo};"></div>`,
+    iconSize: [16, 16],
+    iconAnchor: [8, 8],
+  });
+
+  markerIconCache.set(label, icon);
+  return icon;
+}
+
+function MapFocusController({ selectedPosition }: { selectedPosition: LatLngExpression | null }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!selectedPosition) return;
+    map.flyTo(selectedPosition, Math.max(map.getZoom(), 14), {
+      animate: true,
+      duration: 0.8,
+    });
+  }, [map, selectedPosition]);
+
+  return null;
+}
+
 export default function Dashboard() {
+  const { showToast } = useToast();
   const [airData, setAirData] = useState<AirQualityPayload | null>(null);
   const [timeline, setTimeline] = useState<AirQualityTimelinePayload | null>(null);
   const [reports, setReports] = useState<RecentReportPayload[]>([]);
@@ -142,6 +199,8 @@ export default function Dashboard() {
   const [errorMessage, setErrorMessage] = useState("");
   const [locationLabel, setLocationLabel] = useState("Đang xác định vị trí...");
   const [isMapReady, setIsMapReady] = useState(false);
+  const [selectedReportId, setSelectedReportId] = useState<number | null>(null);
+  const [labelFilter, setLabelFilter] = useState<string>("all");
 
   useEffect(() => {
     setIsMapReady(true);
@@ -206,7 +265,9 @@ export default function Dashboard() {
           setAirData(null);
           setTimeline(null);
           setReports([]);
-          setErrorMessage(error instanceof Error ? error.message : "Không thể tải dữ liệu dashboard");
+          const message = error instanceof Error ? error.message : "Không thể tải dữ liệu dashboard";
+          setErrorMessage(message);
+          showToast("danger", "Dashboard lỗi", message);
         }
       } finally {
         if (!cancelled) {
@@ -220,7 +281,16 @@ export default function Dashboard() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [showToast]);
+
+  useEffect(() => {
+    if (selectedReportId === null) return;
+
+    const element = document.getElementById(`report-card-${selectedReportId}`);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [selectedReportId]);
 
   const aqiUS = airData?.current?.pollution?.aqius ?? timeline?.current?.us_aqi ?? 0;
   const weather = airData?.current?.weather;
@@ -231,6 +301,42 @@ export default function Dashboard() {
     if (!coordinates || coordinates.length < 2) return null;
     return [coordinates[1], coordinates[0]];
   }, [coordinates]);
+
+  const reportLabelOptions = useMemo(
+    () => Array.from(new Set(reports.map((report) => report.label))).sort((a, b) => a.localeCompare(b)),
+    [reports]
+  );
+
+  const filteredReports = useMemo(() => {
+    if (labelFilter === "all") return reports;
+    return reports.filter((report) => report.label === labelFilter);
+  }, [labelFilter, reports]);
+
+  const reportPositions = useMemo(
+    () =>
+      filteredReports.filter(
+        (report) => report.latitude !== null && report.latitude !== undefined && report.longitude !== null && report.longitude !== undefined
+      ),
+    [filteredReports]
+  );
+
+  const selectedReport = useMemo(
+    () => filteredReports.find((report) => report.id === selectedReportId) ?? null,
+    [filteredReports, selectedReportId]
+  );
+
+  const selectedReportPosition = useMemo<LatLngExpression | null>(() => {
+    if (
+      !selectedReport ||
+      selectedReport.latitude === null ||
+      selectedReport.latitude === undefined ||
+      selectedReport.longitude === null ||
+      selectedReport.longitude === undefined
+    ) {
+      return null;
+    }
+    return [selectedReport.latitude, selectedReport.longitude];
+  }, [selectedReport]);
 
   const chartPoints = useMemo(() => {
     const times = timeline?.hourly?.time ?? [];
@@ -297,20 +403,20 @@ export default function Dashboard() {
   ];
 
   const dominantLabel = useMemo(() => {
-    if (reports.length === 0) return "Chưa có report";
+    if (filteredReports.length === 0) return "Chưa có report";
     return (
       Object.entries(
-        reports.reduce<Record<string, number>>((acc, report) => {
+        filteredReports.reduce<Record<string, number>>((acc, report) => {
           acc[report.label] = (acc[report.label] ?? 0) + 1;
           return acc;
         }, {})
       ).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "Unknown"
     );
-  }, [reports]);
+  }, [filteredReports]);
 
   const advice = healthAdvice(aqiUS);
-  const highConfidenceCount = reports.filter((report) => report.confidence >= 0.85).length;
-  const latestReportTime = reports[0]?.created_at ? timeAgo(reports[0].created_at) : "Chưa có";
+  const highConfidenceCount = filteredReports.filter((report) => report.confidence >= 0.85).length;
+  const latestReportTime = filteredReports[0]?.created_at ? timeAgo(filteredReports[0].created_at) : "Chưa có";
   const healthCards = [
     {
       title: "Bảo vệ nhóm nhạy cảm",
@@ -337,6 +443,13 @@ export default function Dashboard() {
       emoji: "📡",
     },
   ];
+
+  useEffect(() => {
+    if (selectedReportId === null) return;
+    if (!filteredReports.some((report) => report.id === selectedReportId)) {
+      setSelectedReportId(null);
+    }
+  }, [filteredReports, selectedReportId]);
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(255,216,102,0.28),_transparent_32%),linear-gradient(180deg,_#fffaf0_0%,_#f8fafc_30%,_#eef4ff_100%)] text-slate-900 dark:bg-[radial-gradient(circle_at_top,_rgba(250,204,21,0.1),_transparent_24%),linear-gradient(180deg,_#07111b_0%,_#0f172a_45%,_#111827_100%)] dark:text-slate-100">
@@ -406,7 +519,7 @@ export default function Dashboard() {
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="rounded-full bg-amber-100 px-3 py-1 font-semibold text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">EcoSnap</span>
-                  {reports.length} report gần đây từ DB
+                  {filteredReports.length} report gần đây từ DB
                 </div>
               </div>
             </div>
@@ -597,6 +710,7 @@ export default function Dashboard() {
               {isMapReady && position ? (
                 <MapContainer center={position} zoom={11} className="h-[360px] overflow-hidden rounded-3xl">
                   <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                  <MapFocusController selectedPosition={selectedReportPosition} />
                   <Marker position={position}>
                     <Popup>
                       <div className="font-semibold">{airData?.city}</div>
@@ -604,6 +718,29 @@ export default function Dashboard() {
                       <div>Report nổi bật: {dominantLabel}</div>
                     </Popup>
                   </Marker>
+                  {reportPositions.map((report) => (
+                    <Marker
+                      key={report.id}
+                      position={[report.latitude as number, report.longitude as number]}
+                      icon={getReportMarkerIcon(report.label)}
+                      eventHandlers={{
+                        click: () => setSelectedReportId(report.id),
+                      }}
+                    >
+                      <Popup>
+                        <div className="flex items-center gap-2 font-semibold capitalize">
+                          <span
+                            className="inline-block h-3 w-3 rounded-full border border-white/80"
+                            style={{ backgroundColor: getLabelMarkerStyle(report.label).fill }}
+                          />
+                          {report.label}
+                        </div>
+                        <div>Confidence: {Math.round(report.confidence * 100)}%</div>
+                        <div>Tọa độ: {formatCoordinates(report.latitude, report.longitude)}</div>
+                        {report.transcript?.trim() && <div>Voice: {report.transcript.trim()}</div>}
+                      </Popup>
+                    </Marker>
+                  ))}
                 </MapContainer>
               ) : (
                 <div className="flex h-[360px] items-center justify-center rounded-3xl bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
@@ -644,47 +781,73 @@ export default function Dashboard() {
 
             <div className="mb-6 grid gap-4 md:grid-cols-3">
               <div className="rounded-[24px] border border-white/70 bg-gradient-to-br from-sky-100 to-cyan-100 p-4 shadow-sm dark:border-slate-800 dark:from-sky-950/50 dark:to-cyan-950/30">
-                <div className="flex items-center justify-between">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/80 text-slate-800 dark:bg-slate-900/70 dark:text-white">
-                    <Layers3 className="h-5 w-5" />
-                  </div>
+                <div className="flex items-center justify-end">
                   <span className="text-xs uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Tổng report</span>
                 </div>
                 <div className="mt-5 text-2xl font-black text-slate-900 dark:text-white">{reports.length}</div>
+                <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">{filteredReports.length} đang hiển thị</div>
               </div>
 
               <div className="rounded-[24px] border border-white/70 bg-gradient-to-br from-amber-100 to-yellow-100 p-4 shadow-sm dark:border-slate-800 dark:from-amber-950/50 dark:to-yellow-950/30">
-                <div className="flex items-center justify-between">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/80 text-slate-800 dark:bg-slate-900/70 dark:text-white">
-                    <Sparkles className="h-5 w-5" />
-                  </div>
+                <div className="flex items-center justify-end">
                   <span className="text-xs uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Confidence cao</span>
                 </div>
                 <div className="mt-5 text-2xl font-black text-slate-900 dark:text-white">{highConfidenceCount}</div>
               </div>
 
               <div className="rounded-[24px] border border-white/70 bg-gradient-to-br from-emerald-100 to-lime-100 p-4 shadow-sm dark:border-slate-800 dark:from-emerald-950/50 dark:to-lime-950/30">
-                <div className="flex items-center justify-between">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/80 text-slate-800 dark:bg-slate-900/70 dark:text-white">
-                    <Camera className="h-5 w-5" />
-                  </div>
+                <div className="flex items-center justify-end">
                   <span className="text-xs uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Mới nhất</span>
                 </div>
                 <div className="mt-5 text-2xl font-black text-slate-900 dark:text-white">{latestReportTime}</div>
               </div>
             </div>
 
+            <div className="mb-6 flex flex-wrap items-center gap-3">
+              <span className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
+                Filter theo label
+              </span>
+              <button
+                onClick={() => setLabelFilter("all")}
+                className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                  labelFilter === "all"
+                    ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                }`}
+              >
+                Tất cả
+              </button>
+              {reportLabelOptions.map((label) => (
+                <button
+                  key={label}
+                  onClick={() => setLabelFilter(label)}
+                  className={`rounded-full px-4 py-2 text-sm font-semibold capitalize transition ${
+                    labelFilter === label
+                      ? "bg-emerald-500 text-white shadow-[0_12px_30px_rgba(16,185,129,0.24)]"
+                      : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-900/50"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
             <div className="space-y-4">
-              {reports.length === 0 && !loading && (
+              {filteredReports.length === 0 && !loading && (
                 <div className="rounded-3xl border border-dashed border-slate-300 px-4 py-6 text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
-                  Chưa có report nào trong database.
+                  Không có report nào khớp với bộ lọc hiện tại.
                 </div>
               )}
 
-              {reports.map((report) => (
+              {filteredReports.map((report) => (
                 <div
                   key={report.id}
-                  className="group overflow-hidden rounded-[28px] border border-slate-200 bg-white/85 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg dark:border-slate-700 dark:bg-slate-800/70"
+                  id={`report-card-${report.id}`}
+                  className={`group overflow-hidden rounded-[28px] border bg-white/85 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg dark:bg-slate-800/70 ${
+                    selectedReportId === report.id
+                      ? "border-emerald-400 ring-2 ring-emerald-300/70 dark:border-emerald-500 dark:ring-emerald-500/30"
+                      : "border-slate-200 dark:border-slate-700"
+                  }`}
                 >
                   <div className="grid lg:grid-cols-[0.9fr_1.1fr]">
                     <div className="relative min-h-[220px] overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(56,189,248,0.35),_transparent_32%),linear-gradient(160deg,_#0f172a_0%,_#1e293b_48%,_#334155_100%)]">
@@ -745,14 +908,53 @@ export default function Dashboard() {
                               {Math.round(report.confidence * 100)}%
                             </div>
                           </div>
+                          <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-900/50">
+                            <div className="text-xs uppercase tracking-[0.16em] text-slate-400">Tọa độ</div>
+                            <div className="mt-2 text-sm font-semibold text-slate-900 dark:text-white">
+                              {formatCoordinates(report.latitude, report.longitude)}
+                            </div>
+                          </div>
+                          <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-900/50">
+                            <div className="text-xs uppercase tracking-[0.16em] text-slate-400">Nguồn dữ liệu</div>
+                            <div className="mt-2 text-sm font-semibold text-slate-900 dark:text-white">
+                              {report.transcript?.trim() ? "Ảnh + voice transcript" : "Ảnh upload"}
+                            </div>
+                          </div>
                         </div>
 
                         <div className="mt-4 rounded-2xl border border-slate-200 bg-white px-4 py-4 text-sm leading-7 text-slate-600 dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-300">
-                          Report này có thể dùng để đối chiếu với AQI hiện tại, nồng độ chất ô nhiễm và các biến động trong lịch sử gần đây.
+                          {report.transcript?.trim()
+                            ? report.transcript.trim()
+                            : "Report này có thể dùng để đối chiếu với AQI hiện tại, nồng độ chất ô nhiễm và các biến động trong lịch sử gần đây."}
                         </div>
                       </div>
 
                       <div className="mt-5 flex flex-wrap items-center gap-3">
+                        <button
+                          onClick={() => setSelectedReportId(report.id)}
+                          disabled={
+                            report.latitude === null ||
+                            report.latitude === undefined ||
+                            report.longitude === null ||
+                            report.longitude === undefined
+                          }
+                          className={`inline-flex items-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold transition ${
+                            report.latitude !== null &&
+                            report.latitude !== undefined &&
+                            report.longitude !== null &&
+                            report.longitude !== undefined
+                              ? "bg-emerald-500 text-white hover:bg-emerald-600"
+                              : "cursor-not-allowed bg-slate-200 text-slate-500 dark:bg-slate-700 dark:text-slate-400"
+                          }`}
+                        >
+                          <Search className="h-4 w-4" />
+                          {report.latitude !== null &&
+                          report.latitude !== undefined &&
+                          report.longitude !== null &&
+                          report.longitude !== undefined
+                            ? "Focus trên bản đồ"
+                            : "Chưa có tọa độ"}
+                        </button>
                         <a
                           href={report.image_url || "#"}
                           target={report.image_url ? "_blank" : undefined}

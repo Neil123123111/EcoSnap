@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8001";
 
@@ -11,6 +12,7 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
   const { login } = useAuth();
+  const { showToast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,9 +33,12 @@ export default function LoginPage() {
 
       const data = await res.json();
       login(data.access_token, data.user);
+      showToast("success", "Đăng nhập thành công", `Chào mừng quay lại, ${data.user.username}.`);
       navigate("/");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed");
+      const message = err instanceof Error ? err.message : "Login failed";
+      setError(message);
+      showToast("danger", "Đăng nhập thất bại", message);
     } finally {
       setLoading(false);
     }
@@ -48,12 +53,7 @@ export default function LoginPage() {
         <p className="text-center text-gray-600 dark:text-gray-400 mb-8">
           Login to EcoSnap to report environmental issues
         </p>
-
-        {error && (
-          <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-lg text-red-600 dark:text-red-400">
-            {error}
-          </div>
-        )}
+        {error && <div className="mb-4 text-sm text-red-600 dark:text-red-400">{error}</div>}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
