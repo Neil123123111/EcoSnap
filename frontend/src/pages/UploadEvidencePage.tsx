@@ -385,10 +385,9 @@ export default function UploadEvidencePage() {
                 </button>
               </div>
             </Card>
-          )}  
+          )}
         </div>
       </main>
     </div>
   );
-} 
-
+}
