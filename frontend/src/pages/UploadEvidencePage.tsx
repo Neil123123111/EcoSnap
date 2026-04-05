@@ -1,546 +1,394 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-import Navbar from "../components/Navbar";
-import Card from "../components/Card";
-import Badge from "../components/Badge";
-import Alert from "../components/Alert";
-import Modal from "../components/Modal";
-import VoiceInput from "../components/VoiceInput";
-import DangerZoneDetection from "../components/DangerZoneDetection";
-import HeatmapDangerMap from "../components/HeatmapDangerMap";
-import CommunityDataTransparency from "../components/CommunityDataTransparency";
-import { analyzeTrashImage, submitReport, fetchCommunityPosts, type TrashClassificationPayload, type CommunityPost } from "../services/api";
-import { useToast } from "../context/ToastContext";
+import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router';
+import { 
+  UploadCloud, Search, Trash2, Image as ImageIcon, 
+  MapPin, Send, ThumbsUp, ThumbsDown, Target, Coins, AlertCircle
+} from 'lucide-react';
 
-type AnalysisResult = TrashClassificationPayload & {
-  severity: "low" | "medium" | "high";
-  description: string;
-  suggestion: string;
-};
+import Navbar from '../components/Navbar';
+import Card from '../components/Card';
+import { useToast } from '../context/ToastContext';
+
+// --- TYPES & INTERFACES ---
+interface ScanResult {
+  class_name: string;
+  confidence: number;
+}
+
+type FeedbackType = 'true_positive' | 'false_positive' | 'false_negative' | null;
+
+interface AIFeedbackForm {
+  type: FeedbackType;
+  actualTrashType: string;
+  percentage: number;
+  comment: string;
+}
 
 export default function UploadEvidencePage() {
-  const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
-  const [files, setFiles] = useState<File[]>([]);
-  const [preview, setPreview] = useState<string[]>([]);
-  const [transcript, setTranscript] = useState("");
-  const [isRecording, setIsRecording] = useState(false);
-  const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
-  const [showAuthModal] = useState(!isAuthenticated);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
-  const [communityReports, setCommunityReports] = useState<CommunityPost[]>([]);
   const { showToast } = useToast();
+  const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // --- STATES ---
+  // 1. File & Location
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
+  const [locationStatus, setLocationStatus] = useState<string>('Đang lấy vị trí...');
+
+  // 2. Processing States
+  const [isScanning, setIsScanning] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  
+  // 3. AI & Feedback Data
+  const [scanResult, setScanResult] = useState<ScanResult | null>(null);
+  const [feedback, setFeedback] = useState<AIFeedbackForm>({
+    type: null,
+    actualTrashType: '',
+    percentage: 0,
+    comment: ''
+  });
+  const [pointsEarned, setPointsEarned] = useState<number>(0);
+  const [isFeedbackCompleted, setIsFeedbackCompleted] = useState<boolean>(false);
+
+  // --- EFFECTS ---
   useEffect(() => {
-    fetchCommunityPosts(20).then(setCommunityReports).catch(() => {});
+    initGeolocation();
   }, []);
 
-  const classThemeMap: Record<
-    string,
-    {
-      shell: string;
-      accent: string;
-      badge: string;
-      glow: string;
-      chip: string;
-      progress: string;
+  // --- LOGIC HANDLERS ---
+  const initGeolocation = () => {
+    if (!navigator.geolocation) {
+      setLocationStatus('Trình duyệt không hỗ trợ định vị');
+      return;
     }
-  > = {
-    paper: {
-      shell:
-        "border-violet-200 bg-[radial-gradient(circle_at_top_left,_rgba(139,92,246,0.18),_transparent_40%),linear-gradient(135deg,_rgba(255,255,255,0.96),_rgba(245,243,255,0.9))] dark:border-violet-900/70 dark:bg-[radial-gradient(circle_at_top_left,_rgba(139,92,246,0.22),_transparent_35%),linear-gradient(135deg,_rgba(20,10,35,0.96),_rgba(88,28,135,0.28))]",
-      accent: "text-violet-700 dark:text-violet-300",
-      badge: "bg-violet-500",
-      glow: "shadow-[0_24px_80px_rgba(139,92,246,0.18)]",
-      chip: "bg-violet-50 text-violet-800 dark:bg-violet-950/40 dark:text-violet-200",
-      progress: "from-violet-500 via-fuchsia-400 to-pink-500",
-    },
-    plastic: {
-      shell:
-        "border-rose-200 bg-[radial-gradient(circle_at_top_left,_rgba(244,63,94,0.18),_transparent_40%),linear-gradient(135deg,_rgba(255,255,255,0.96),_rgba(255,241,242,0.9))] dark:border-rose-900/70 dark:bg-[radial-gradient(circle_at_top_left,_rgba(244,63,94,0.22),_transparent_35%),linear-gradient(135deg,_rgba(35,10,16,0.96),_rgba(127,29,29,0.28))]",
-      accent: "text-rose-700 dark:text-rose-300",
-      badge: "bg-rose-500",
-      glow: "shadow-[0_24px_80px_rgba(244,63,94,0.16)]",
-      chip: "bg-rose-50 text-rose-800 dark:bg-rose-950/40 dark:text-rose-200",
-      progress: "from-rose-500 via-orange-400 to-amber-500",
-    },
-    glass: {
-      shell:
-        "border-cyan-200 bg-[radial-gradient(circle_at_top_left,_rgba(6,182,212,0.18),_transparent_40%),linear-gradient(135deg,_rgba(255,255,255,0.96),_rgba(236,254,255,0.9))] dark:border-cyan-900/70 dark:bg-[radial-gradient(circle_at_top_left,_rgba(6,182,212,0.22),_transparent_35%),linear-gradient(135deg,_rgba(8,24,35,0.96),_rgba(14,116,144,0.28))]",
-      accent: "text-cyan-700 dark:text-cyan-300",
-      badge: "bg-cyan-500",
-      glow: "shadow-[0_24px_80px_rgba(6,182,212,0.16)]",
-      chip: "bg-cyan-50 text-cyan-800 dark:bg-cyan-950/40 dark:text-cyan-200",
-      progress: "from-cyan-500 via-sky-400 to-blue-500",
-    },
-    metal: {
-      shell:
-        "border-slate-200 bg-[radial-gradient(circle_at_top_left,_rgba(100,116,139,0.16),_transparent_40%),linear-gradient(135deg,_rgba(255,255,255,0.96),_rgba(248,250,252,0.9))] dark:border-slate-800/70 dark:bg-[radial-gradient(circle_at_top_left,_rgba(100,116,139,0.2),_transparent_35%),linear-gradient(135deg,_rgba(12,18,24,0.96),_rgba(51,65,85,0.3))]",
-      accent: "text-slate-700 dark:text-slate-300",
-      badge: "bg-slate-600",
-      glow: "shadow-[0_24px_80px_rgba(100,116,139,0.16)]",
-      chip: "bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-200",
-      progress: "from-slate-500 via-zinc-400 to-gray-500",
-    },
-    cardboard: {
-      shell:
-        "border-amber-200 bg-[radial-gradient(circle_at_top_left,_rgba(245,158,11,0.18),_transparent_40%),linear-gradient(135deg,_rgba(255,255,255,0.96),_rgba(255,251,235,0.9))] dark:border-amber-900/70 dark:bg-[radial-gradient(circle_at_top_left,_rgba(245,158,11,0.22),_transparent_35%),linear-gradient(135deg,_rgba(36,20,8,0.96),_rgba(146,64,14,0.28))]",
-      accent: "text-amber-700 dark:text-amber-300",
-      badge: "bg-amber-600",
-      glow: "shadow-[0_24px_80px_rgba(245,158,11,0.16)]",
-      chip: "bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-200",
-      progress: "from-amber-600 via-yellow-500 to-orange-500",
-    },
-    trash: {
-      shell:
-        "border-emerald-200 bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.18),_transparent_40%),linear-gradient(135deg,_rgba(255,255,255,0.96),_rgba(236,253,245,0.9))] dark:border-emerald-900/70 dark:bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.22),_transparent_35%),linear-gradient(135deg,_rgba(4,18,18,0.96),_rgba(6,78,59,0.3))]",
-      accent: "text-emerald-700 dark:text-emerald-300",
-      badge: "bg-emerald-500",
-      glow: "shadow-[0_24px_80px_rgba(16,185,129,0.14)]",
-      chip: "bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200",
-      progress: "from-emerald-500 via-teal-400 to-sky-500",
-    },
-  };
-
-  const getSeverity = (confidence: number): "low" | "medium" | "high" => {
-    if (confidence >= 0.9) return "high";
-    if (confidence >= 0.7) return "medium";
-    return "low";
-  };
-
-  const buildDescription = (label: string, confidence: number) =>
-    `AI classifier nhận diện loại rác là ${label} với độ tin cậy ${(confidence * 100).toFixed(1)}%.`;
-
-  const buildSuggestion = (label: string) =>
-    `Ưu tiên phân loại và xử lý nhóm rác "${label}" theo đúng quy trình tái chế hoặc thu gom tại địa phương.`;
-
-  const activeTheme = analysisResult
-    ? classThemeMap[analysisResult.label.toLowerCase()] || classThemeMap.trash
-    : classThemeMap.trash;
-
-  if (!isAuthenticated && showAuthModal) {
-    return (
-      <>
-        <Navbar />
-        <Modal
-          isOpen={!isAuthenticated}
-          title="Login Required"
-          onClose={() => navigate("/")}
-          size="sm"
-          footer={
-            <div className="flex gap-2">
-              <button
-                onClick={() => navigate("/login")}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-              >
-                Login
-              </button>
-              <button
-                onClick={() => navigate("/register")}
-                className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-              >
-                Register
-              </button>
-            </div>
-          }
-        >
-          <p className="text-gray-700 dark:text-gray-300">
-            You must be logged in to upload environmental evidence and access the full features of EcoSnap.
-          </p>
-        </Modal>
-      </>
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLatitude(pos.coords.latitude);
+        setLongitude(pos.coords.longitude);
+        setLocationStatus('Đã gắn thẻ vị trí hiện tại');
+      },
+      (err) => {
+        setLocationStatus('Không thể lấy vị trí (Vui lòng cấp quyền)');
+        showToast('warning', 'Lỗi vị trí', err.message);
+      },
+      { enableHighAccuracy: true, timeout: 12000 }
     );
-  }
-
-  const handleFiles = (selectedFiles: FileList | null) => {
-    if (!selectedFiles) return;
-    const arr = Array.from(selectedFiles);
-    setFiles(arr);
-    setPreview(arr.map((f) => URL.createObjectURL(f)));
-    setAnalysisResult(null);
-    setErrorMessage("");
   };
 
-  const removeFile = (index: number) => {
-    setFiles(files.filter((_, i) => i !== index));
-    setPreview(preview.filter((_, i) => i !== index));
-    if (index === 0) {
-      setAnalysisResult(null);
-      setErrorMessage("");
-    }
-  };
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-  const handleAnalyze = async () => {
-    if (files.length === 0) {
-      showToast("warning", "Thiếu ảnh", "Hãy chọn ít nhất một ảnh trước khi chạy AI analyze.");
+    if (!file.type.startsWith('image/')) {
+      showToast('danger', 'Lỗi định dạng', 'Vui lòng chọn file hình ảnh hợp lệ (JPEG, PNG).');
       return;
     }
 
-    setIsAnalyzing(true);
-    setErrorMessage("");
+    setSelectedFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
+    resetAIStates();
+  };
+
+  const resetAIStates = () => {
+    setScanResult(null);
+    setFeedback({ type: null, actualTrashType: '', percentage: 0, comment: '' });
+    setPointsEarned(0);
+    setIsFeedbackCompleted(false);
+  };
+
+  const clearSelection = () => {
+    setSelectedFile(null);
+    setPreviewUrl(null);
+    resetAIStates();
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleScanImage = async () => {
+    if (!selectedFile) return;
+    setIsScanning(true);
+
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+
     try {
-      const response = await analyzeTrashImage(files[0]);
-      setAnalysisResult({
-        ...response,
-        severity: getSeverity(response.confidence),
-        description: buildDescription(response.label, response.confidence),
-        suggestion: buildSuggestion(response.label),
+      const apiUrl = (import.meta.env.VITE_API_URL as string) || 'http://localhost:8001';
+      const response = await fetch(`${apiUrl}/report/classify`, {
+        method: 'POST',
+        body: formData,
       });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      setErrorMessage(message);
-      showToast("danger", "Analyze thất bại", message);
+
+      if (!response.ok) throw new Error('Không thể phân tích hình ảnh.');
+
+      const data = (await response.json()) as ScanResult;
+      setScanResult(data);
+      showToast('success', 'Phân tích hoàn tất', `Phát hiện: ${data.class_name}`);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Lỗi kết nối AI server.';
+      showToast('danger', 'Lỗi AI', msg);
     } finally {
-      setIsAnalyzing(false);
+      setIsScanning(false);
     }
   };
 
-  const handleSubmitReport = async () => {
-    if (!files[0] || !analysisResult) {
-      showToast("warning", "Chưa có kết quả", "Bạn cần analyze ảnh trước khi submit report.");
-      return;
+  const handleFeedbackSelect = (type: FeedbackType) => {
+    setFeedback((prev) => ({ ...prev, type }));
+    
+    // Auto-complete if True Positive (No form needed)
+    if (type === 'true_positive') {
+      completeFeedback();
+    } else {
+      // Open form, reset completion status
+      setIsFeedbackCompleted(false);
+      setPointsEarned(0);
+    }
+  };
+
+  const completeFeedback = () => {
+    setIsFeedbackCompleted(true);
+    setPointsEarned(50);
+    showToast('success', '+50 EcoPoints', 'Cảm ơn bạn đã đóng góp cải thiện hệ thống AI!');
+  };
+
+  const handleSubmitFinalReport = async () => {
+    if (!selectedFile || !scanResult) return;
+    setIsSubmitting(true);
+    
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+    formData.append('ai_label', scanResult.class_name);
+    formData.append('ai_confidence', scanResult.confidence.toString());
+    
+    if (latitude && longitude) {
+      formData.append('latitude', latitude.toString());
+      formData.append('longitude', longitude.toString());
     }
 
-    setIsSubmitting(true);
+    // Append AI Training Feedback Data
+    if (isFeedbackCompleted && feedback.type) {
+      formData.append('feedback_type', feedback.type);
+      if (feedback.type !== 'true_positive') {
+        formData.append('actual_trash_type', feedback.actualTrashType);
+        formData.append('trash_percentage', feedback.percentage.toString());
+        formData.append('feedback_comment', feedback.comment);
+      }
+      formData.append('earned_points', pointsEarned.toString());
+    }
+
     try {
-      await submitReport({
-        imageUrl: analysisResult.image_url,
-        label: analysisResult.label,
-        confidence: analysisResult.confidence,
-        transcript,
-        latitude: location?.lat,
-        longitude: location?.lng,
+      const apiUrl = (import.meta.env.VITE_API_URL as string) || 'http://localhost:8001';
+      const token = localStorage.getItem('token'); 
+      const headers: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {};
+
+      const response = await fetch(`${apiUrl}/report/submit`, {
+        method: 'POST',
+        headers,
+        body: formData,
       });
 
-      // Re-fetch community posts (backend auto-creates one on submit)
-      fetchCommunityPosts(20).then(setCommunityReports).catch(() => {});
+      if (!response.ok) throw new Error('Không thể lưu report.');
 
-      setAnalysisResult(null);
-      setFiles([]);
-      setPreview([]);
-      setTranscript("");
-      setLocation(null);
-      setErrorMessage("");
-      showToast("success", "Đã gửi report", "Report đã được lưu vào hệ thống cùng transcript và tọa độ.");
-    } catch (error) {
-      showToast(
-        "danger",
-        "Submit thất bại",
-        error instanceof Error ? error.message : "Unknown error"
-      );
+      showToast('success', 'Đã gửi Report', 'Dữ liệu đã được cập nhật lên bản đồ cộng đồng.');
+      navigate('/dashboard');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Lỗi khi gửi report.';
+      showToast('danger', 'Lỗi hệ thống', msg);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50 text-gray-900 transition-colors dark:from-gray-950 dark:via-gray-900 dark:to-slate-900 dark:text-gray-100">
-      <Navbar />
+  // --- RENDER HELPERS (Clean Code Pattern) ---
 
-      {/* HERO SECTION */}
-      <section className="pt-20 pb-10 px-6 text-center">
-        <h1 className="text-4xl md:text-5xl font-bold mb-4 text-gray-900 dark:text-white">
-          Report Environmental Evidence
-        </h1>
-        <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-          Upload images, record voice descriptions, and let our AI analyze environmental violations in your area.
-        </p>
-      </section>
+  const renderUploadArea = () => (
+    <Card className="rounded-[28px] border border-slate-200/80 bg-white/90 p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/80" hover={false}>
+      <div className="mb-4 flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+        <MapPin className={`h-4 w-4 ${latitude ? 'text-emerald-500' : 'text-amber-500 animate-pulse'}`} />
+        {locationStatus} {latitude && longitude ? `(${latitude.toFixed(4)}, ${longitude.toFixed(4)})` : ''}
+      </div>
 
-      {/* DANGER ALERT BANNER */}
-      {location && (
-        <div className="px-6 max-w-6xl mx-auto mb-6">
-          <Alert
-            variant="warning"
-            title="📍 Location Detected"
-            message={`You're reporting from area with coordinates: ${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}`}
-            onClose={() => setLocation(null)}
-            duration={0}
-          />
+      {!previewUrl ? (
+        <div 
+          onClick={() => fileInputRef.current?.click()}
+          className="border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-3xl p-12 text-center hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer"
+        >
+          <UploadCloud className="mx-auto h-12 w-12 text-slate-400" />
+          <span className="mt-4 block text-base font-semibold text-slate-900 dark:text-slate-100">Nhấn hoặc kéo thả ảnh vào đây</span>
+          <span className="mt-1 block text-sm text-slate-500 dark:text-slate-400">Hỗ trợ PNG, JPG (Tối đa 10MB)</span>
+        </div>
+      ) : (
+        <div className="relative rounded-3xl overflow-hidden bg-slate-100 dark:bg-slate-950 flex justify-center max-h-[400px]">
+          <img src={previewUrl} alt="Evidence" className="object-contain max-h-[400px]" />
+          <button 
+            onClick={clearSelection}
+            className="absolute top-4 right-4 p-3 bg-rose-600/90 text-white rounded-2xl hover:bg-rose-700 transition-colors backdrop-blur"
+          >
+            <Trash2 className="h-5 w-5" />
+          </button>
         </div>
       )}
 
-      <div className="max-w-6xl mx-auto px-6 pb-20">
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* LEFT: UPLOAD FORM */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* STEP 1: UPLOAD IMAGE */}
-            <div>
-              <Card className="p-6 border border-gray-200/80 dark:border-gray-700 dark:bg-gray-800/95">
-                <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">1️⃣ Upload Evidence</h2>
+      <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
 
-                {/* FILE UPLOAD */}
-                <div
-                  className="rounded-lg border-2 border-dashed border-green-400 bg-white/70 p-8 text-center text-gray-800 transition hover:bg-green-50 dark:bg-gray-900/40 dark:text-gray-100 dark:hover:bg-green-900/20"
-                  onDragOver={(e) => e.preventDefault()}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    handleFiles(e.dataTransfer.files);
-                  }}
-                >
-                  <input
-                    type="file"
-                    accept="image/*,video/*"
-                    onChange={(e) => handleFiles(e.target.files)}
-                    className="hidden"
-                    id="file-input"
-                  />
-                  <label htmlFor="file-input" className="cursor-pointer block">
-                    <p className="text-3xl mb-2">📸</p>
-                    <p className="mb-1 font-semibold text-gray-900 dark:text-white">Drag and drop or click to upload</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-300">Supports images and videos up to 50MB</p>
-                  </label>
-                </div>
-
-                {/* PREVIEW */}
-                {preview.length > 0 && (
-                  <div className="mt-6 space-y-4">
-                    <h3 className="font-semibold text-gray-900 dark:text-white">Preview ({preview.length})</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      {preview.map((src, idx) => (
-                        <div
-                          key={idx}
-                          className="relative group"
-                        >
-                          <img src={src} alt={`Preview ${idx}`} className="w-full h-32 object-cover rounded-lg" />
-                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition rounded-lg flex items-center justify-center gap-2">
-                            <button
-                              onClick={() => removeFile(idx)}
-                              className="px-3 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600"
-                            >
-                              Remove
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </Card>
-            </div>
-
-            {/* STEP 2: VOICE INPUT */}
-            <div>
-              <Card className="p-6 border border-gray-200/80 dark:border-gray-700 dark:bg-gray-800/95">
-                <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">2️⃣ Add Voice Description (Optional)</h2>
-                <VoiceInput onTranscript={setTranscript} isRecording={isRecording} setIsRecording={setIsRecording} />
-              </Card>
-            </div>
-
-            {/* STEP 3: AI ANALYSIS */}
-            <div>
-              <Card className="p-6 border border-gray-200/80 dark:border-gray-700 dark:bg-gray-800/95">
-                <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">3️⃣ AI Analysis</h2>
-                <button
-                  onClick={handleAnalyze}
-                  disabled={files.length === 0 || isAnalyzing}
-                  className="w-full px-6 py-3 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-lg font-semibold hover:shadow-lg disabled:opacity-50 transition"
-                >
-                  {isAnalyzing ? "🔄 Analyzing..." : "🤖 Analyze Image"}
-                </button>
-
-                {errorMessage && (
-                  <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/70 dark:bg-red-950/30 dark:text-red-200">
-                    {errorMessage}
-                  </div>
-                )}
-
-                {analysisResult && (
-                  <div className={`mt-6 overflow-hidden rounded-3xl border p-5 ${activeTheme.shell} ${activeTheme.glow}`}>
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <div>
-                        <p className={`text-xs font-semibold uppercase tracking-[0.24em] ${activeTheme.accent}`}>
-                          Trained Classifier Result
-                        </p>
-                        <h3 className="mt-2 text-2xl font-black capitalize text-gray-900 dark:text-white">
-                          {analysisResult.label}
-                        </h3>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <Badge
-                          variant={
-                            analysisResult.severity === "high"
-                              ? "danger"
-                              : analysisResult.severity === "medium"
-                              ? "warning"
-                              : "success"
-                          }
-                        >
-                          {analysisResult.severity.toUpperCase()}
-                        </Badge>
-                        <span className={`rounded-full px-4 py-2 text-sm font-semibold shadow-sm ${activeTheme.chip}`}>
-                          {(analysisResult.confidence * 100).toFixed(1)}% confidence
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="mt-4 grid gap-4 lg:grid-cols-[1.08fr_0.92fr]">
-                      <div className="space-y-4">
-                        <div className="overflow-hidden rounded-3xl border border-white/70 bg-slate-950/90 shadow-2xl">
-                          <div className="border-b border-white/10 px-4 py-3 text-xs font-semibold uppercase tracking-[0.24em] text-emerald-300">
-                            Classification Preview
-                          </div>
-                          <img
-                            src={analysisResult.image_url}
-                            alt={analysisResult.label}
-                            className="block w-full h-auto"
-                          />
-                        </div>
-                        <div className="grid gap-3 sm:grid-cols-3">
-                          <div className="rounded-2xl border border-white/70 bg-white/70 px-4 py-3 text-sm dark:border-white/10 dark:bg-black/10">
-                            <p className="text-xs uppercase tracking-[0.18em] text-gray-500 dark:text-gray-400">Predictions</p>
-                            <p className="mt-2 text-2xl font-black text-gray-900 dark:text-white">
-                              {analysisResult.top_predictions.length}
-                            </p>
-                          </div>
-                          <div className="rounded-2xl border border-white/70 bg-white/70 px-4 py-3 text-sm dark:border-white/10 dark:bg-black/10">
-                            <p className="text-xs uppercase tracking-[0.18em] text-gray-500 dark:text-gray-400">Classifier</p>
-                            <p className="mt-2 truncate text-sm font-semibold text-gray-900 dark:text-white">
-                              {analysisResult.label}
-                            </p>
-                          </div>
-                          <div className="rounded-2xl border border-white/70 bg-white/70 px-4 py-3 text-sm dark:border-white/10 dark:bg-black/10">
-                            <p className="text-xs uppercase tracking-[0.18em] text-gray-500 dark:text-gray-400">Top-1 Confidence</p>
-                            <p className="mt-2 text-sm font-semibold text-gray-900 dark:text-white">
-                              {(analysisResult.confidence * 100).toFixed(1)}%
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="rounded-2xl border border-white/70 bg-white/70 p-4 backdrop-blur-sm dark:border-white/10 dark:bg-black/10">
-                        <p className="text-sm font-semibold text-gray-900 dark:text-white">AI Summary</p>
-                        <p className="mt-2 text-sm leading-6 text-gray-700 dark:text-gray-300">
-                          {analysisResult.description}
-                        </p>
-                        <p className="mt-3 text-sm leading-6 text-emerald-800 dark:text-emerald-200">
-                          {analysisResult.suggestion}
-                        </p>
-                        <p className="mt-4 text-xs text-gray-500 dark:text-gray-400">
-                          Model: {analysisResult.model_path}
-                        </p>
-                        {location && (
-                          <div className="mt-4 rounded-2xl bg-emerald-50/80 px-4 py-3 text-sm text-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-100">
-                            Tọa độ hiện tại: {location.lat.toFixed(4)}, {location.lng.toFixed(4)}
-                          </div>
-                        )}
-                        {transcript.trim() && (
-                          <div className="mt-3 rounded-2xl bg-slate-100/80 px-4 py-3 text-sm leading-6 text-slate-700 dark:bg-slate-900/50 dark:text-slate-300">
-                            <span className="mb-1 block text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-                              Voice Transcript
-                            </span>
-                            {transcript.trim()}
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="rounded-2xl border border-emerald-100 bg-white/80 p-4 dark:border-emerald-900/60 dark:bg-black/10">
-                        <p className="text-sm font-semibold text-gray-900 dark:text-white">Top Predictions</p>
-                        <div className={`mt-3 rounded-2xl bg-gradient-to-r ${activeTheme.progress} p-[1px]`}>
-                          <div className="rounded-2xl bg-white px-4 py-4 dark:bg-slate-900">
-                            <p className={`text-xs uppercase tracking-[0.18em] ${activeTheme.accent}`}>
-                              Top-1 Class
-                            </p>
-                            <div className="mt-2 flex items-end justify-between gap-3">
-                              <div>
-                                <p className={`text-3xl font-black capitalize ${activeTheme.accent}`}>
-                                  {analysisResult.label}
-                                </p>
-                                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                                  Class chính được backend trả về sau khi classify
-                                </p>
-                              </div>
-                              <div className={`rounded-2xl px-4 py-3 text-right ${activeTheme.chip}`}>
-                                <p className={`text-xs uppercase tracking-[0.18em] ${activeTheme.accent}`}>
-                                  Confidence
-                                </p>
-                                <p className={`mt-1 text-2xl font-black ${activeTheme.accent}`}>
-                                  {(analysisResult.confidence * 100).toFixed(1)}%
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="mt-4 space-y-3">
-                          {analysisResult.top_predictions.map((prediction, index) => (
-                            <div
-                              key={`${prediction.label}-${index}`}
-                              className={`rounded-2xl px-4 py-3 ${
-                                index === 0
-                                  ? `${activeTheme.chip} border border-white/80 dark:border-white/10`
-                                  : "border border-gray-200/80 bg-white/70 dark:border-gray-700/80 dark:bg-slate-900/40"
-                              }`}
-                            >
-                              <div className="mb-1 flex items-center justify-between text-sm">
-                                <div className="flex items-center gap-2">
-                                  <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-gray-900 text-[11px] font-bold text-white dark:bg-white dark:text-gray-900">
-                                    {index + 1}
-                                  </span>
-                                  <span className="font-semibold capitalize text-gray-800 dark:text-gray-100">
-                                    {prediction.label}
-                                  </span>
-                                </div>
-                                <span className="text-gray-500 dark:text-gray-400">
-                                  {(prediction.confidence * 100).toFixed(1)}%
-                                </span>
-                              </div>
-                              <div className="h-2 overflow-hidden rounded-full bg-emerald-100 dark:bg-emerald-950/60">
-                                <div
-                                  className={`h-full rounded-full bg-gradient-to-r ${activeTheme.progress}`}
-                                  style={{ width: `${Math.max(prediction.confidence * 100, 4)}%` }}
-                                />
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </Card>
-            </div>
-
-            {/* STEP 4: SUBMIT */}
-            {analysisResult && (
-              <div>
-                <Card className="border border-green-200/80 bg-gradient-to-r from-green-50 to-blue-50 p-6 dark:border-green-900/60 dark:from-green-950/30 dark:to-blue-950/30">
-                  <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">4️⃣ Submit Report</h2>
-                  <button
-
-                    onClick={handleSubmitReport}
-                    disabled={isSubmitting}
-                    className="w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-green-600 text-white rounded-lg font-semibold hover:shadow-lg disabled:opacity-50 transition"
-                  >
-                    {isSubmitting ? "📤 Submitting..." : "✅ Submit Report"}
-                  </button>
-                </Card>
-              </div>
-            )}
-          </div>
-
-          {/* RIGHT: SIDEBAR */}
-          <div className="space-y-6">
-            {/* DANGER ZONE DETECTION */}
-            <div>
-              <DangerZoneDetection onLocationUpdate={(lat, lng) => setLocation({ lat, lng })} />
-            </div>
-
-            {/* HEATMAP */}
-            <div>
-              <HeatmapDangerMap lat={location?.lat} lng={location?.lng} />
-            </div>
-
-            {/* COMMUNITY DATA */}
-            <div>
-              <CommunityDataTransparency communityReports={communityReports} />
-            </div>
-          </div>
+      {previewUrl && !scanResult && (
+        <div className="mt-6 flex justify-end">
+          <button
+            onClick={handleScanImage}
+            disabled={isScanning}
+            className="flex items-center gap-2 rounded-2xl bg-slate-900 px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-slate-800 disabled:opacity-50 dark:bg-emerald-600 dark:hover:bg-emerald-500"
+          >
+            {isScanning ? <span className="animate-pulse">Đang quét ảnh...</span> : <><Search className="h-5 w-5" /> Quét ảnh bằng AI</>}
+          </button>
         </div>
+      )}
+    </Card>
+  );
+
+  const renderFeedbackSection = () => {
+    if (!scanResult) return null;
+
+    return (
+      <div className="mt-6 border-t border-emerald-200/50 dark:border-emerald-800/50 pt-6">
+        <h4 className="text-sm font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-4 flex items-center gap-2">
+          <Target className="h-4 w-4" /> Đánh giá AI để nhận +50 EcoPoints
+        </h4>
+        
+        <div className="flex flex-wrap gap-3 mb-6">
+          <button 
+            onClick={() => handleFeedbackSelect('true_positive')}
+            className={`flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-semibold transition ${feedback.type === 'true_positive' ? 'bg-emerald-500 border-emerald-500 text-white' : 'bg-white border-slate-200 text-slate-700 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300 hover:bg-slate-50'}`}
+          >
+            <ThumbsUp className="h-4 w-4" /> Chính xác
+          </button>
+          <button 
+            onClick={() => handleFeedbackSelect('false_positive')}
+            className={`flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-semibold transition ${feedback.type === 'false_positive' ? 'bg-rose-500 border-rose-500 text-white' : 'bg-white border-slate-200 text-slate-700 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300 hover:bg-slate-50'}`}
+          >
+            <ThumbsDown className="h-4 w-4" /> Sai loại rác
+          </button>
+          <button 
+            onClick={() => handleFeedbackSelect('false_negative')}
+            className={`flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-semibold transition ${feedback.type === 'false_negative' ? 'bg-amber-500 border-amber-500 text-white' : 'bg-white border-slate-200 text-slate-700 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300 hover:bg-slate-50'}`}
+          >
+            <AlertCircle className="h-4 w-4" /> Có rác nhưng AI bỏ sót
+          </button>
+        </div>
+
+        {/* Pop-up Form for Incorrect Detections */}
+        {(feedback.type === 'false_positive' || feedback.type === 'false_negative') && !isFeedbackCompleted && (
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-700 space-y-4 animate-in slide-in-from-top-2">
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Loại rác thực tế là gì?</label>
+              <input 
+                type="text" 
+                placeholder="VD: Nhựa, Thủy tinh, Giấy..."
+                value={feedback.actualTrashType}
+                onChange={(e) => setFeedback({...feedback, actualTrashType: e.target.value})}
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm focus:border-emerald-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Tỷ lệ rác trong ảnh (%)</label>
+              <div className="flex items-center gap-4">
+                <input 
+                  type="range" min="0" max="100" step="10"
+                  value={feedback.percentage}
+                  onChange={(e) => setFeedback({...feedback, percentage: parseInt(e.target.value)})}
+                  className="w-full accent-emerald-500"
+                />
+                <span className="font-bold text-emerald-600 dark:text-emerald-400 w-12">{feedback.percentage}%</span>
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Ghi chú thêm (Tùy chọn)</label>
+              <textarea 
+                rows={2} placeholder="Mô tả bối cảnh để AI học tốt hơn..."
+                value={feedback.comment}
+                onChange={(e) => setFeedback({...feedback, comment: e.target.value})}
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm focus:border-emerald-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              />
+            </div>
+            <button 
+              onClick={completeFeedback}
+              disabled={!feedback.actualTrashType}
+              className="w-full mt-2 rounded-xl bg-slate-900 py-3 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200 transition"
+            >
+              Hoàn tất đánh giá
+            </button>
+          </div>
+        )}
       </div>
+    );
+  };
+
+  // --- MAIN RENDER ---
+  return (
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(255,216,102,0.28),_transparent_32%),linear-gradient(180deg,_#fffaf0_0%,_#f8fafc_30%,_#eef4ff_100%)] text-slate-900 dark:bg-[radial-gradient(circle_at_top,_rgba(250,204,21,0.1),_transparent_24%),linear-gradient(180deg,_#07111b_0%,_#0f172a_45%,_#111827_100%)] dark:text-slate-100">
+      <Navbar />
+
+      <main className="mx-auto max-w-4xl px-5 pb-24 pt-28">
+        <section className="mb-8 text-center">
+          <h1 className="text-4xl font-black tracking-tight text-slate-900 dark:text-white md:text-5xl">Báo cáo vấn đề môi trường</h1>
+          <p className="mt-4 text-lg text-slate-600 dark:text-slate-300">
+            Tải ảnh lên để AI tự động phân loại rác thải. Tham gia đánh giá AI để nhận điểm thưởng EcoPoints.
+          </p>
+        </section>
+
+        <div className="space-y-6">
+          {renderUploadArea()}
+
+          {scanResult && (
+            <Card className="rounded-[28px] border border-emerald-200/80 bg-emerald-50/40 p-6 shadow-sm dark:border-emerald-900/40 dark:bg-emerald-950/20 animate-in fade-in" hover={false}>
+              
+              {/* Top Section: AI Result & Points Earned */}
+              <div className="flex items-start justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-sm dark:bg-slate-900">
+                    <ImageIcon className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-white">Hệ thống AI nhận diện</h3>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">YOLOv8 + Custom Classifier</p>
+                  </div>
+                </div>
+                {pointsEarned > 0 && (
+                  <div className="flex items-center gap-2 bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400 px-4 py-2 rounded-full font-bold animate-in zoom-in">
+                    <Coins className="h-5 w-5" /> +{pointsEarned} EcoPoints
+                  </div>
+                )}
+              </div>
+
+              {/* Data Cards */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="rounded-2xl bg-white p-4 shadow-sm dark:bg-slate-900/60">
+                  <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Loại phát hiện</p>
+                  <p className="mt-1 text-2xl font-black text-slate-900 dark:text-white capitalize">{scanResult.class_name}</p>
+                </div>
+                <div className="rounded-2xl bg-white p-4 shadow-sm dark:bg-slate-900/60">
+                  <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Độ tin cậy</p>
+                  <p className="mt-1 text-2xl font-black text-emerald-600 dark:text-emerald-400">{Math.round(scanResult.confidence * 100)}%</p>
+                </div>
+              </div>
+              
+              {/* Modular Feedback Section */}
+              {renderFeedbackSection()}
+              
+              {/* Bottom Action: Final Submit */}
+              <div className="mt-6 flex justify-end pt-6 border-t border-slate-200/60 dark:border-slate-700/60">
+                <button 
+                  onClick={handleSubmitFinalReport}
+                  disabled={isSubmitting || (feedback.type !== null && !isFeedbackCompleted)}
+                  className="flex items-center gap-2 rounded-2xl bg-emerald-500 px-8 py-4 text-base font-bold text-white shadow-[0_12px_30px_rgba(16,185,129,0.24)] transition hover:bg-emerald-600 disabled:opacity-50"
+                >
+                  {isSubmitting ? 'Đang cập nhật lên bản đồ...' : <><Send className="h-5 w-5" /> Đóng góp Report & Nhận điểm</>}
+                </button>
+              </div>
+            </Card>
+          )}  
+        </div>
+      </main>
     </div>
   );
-}
+} 
+
