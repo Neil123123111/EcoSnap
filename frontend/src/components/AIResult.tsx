@@ -87,7 +87,7 @@ export default function AIResult({
     >
       <h3 className="font-bold mb-3">AI Result</h3>
 
-      {/* 🔥 ảnh từ backend */}
+      {/*  ảnh từ backend */}
       {image_url && (
         <img
           src={image_url}

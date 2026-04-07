@@ -33,6 +33,9 @@ import type {
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
+import { useAuth } from "../context/AuthContext";
+import Modal from "../components/Modal";
+import { useNavigate } from "react-router-dom";
 
 delete (L.Icon.Default.prototype as { _getIconUrl?: unknown })._getIconUrl;
 
@@ -201,6 +204,46 @@ export default function Dashboard() {
   const [isMapReady, setIsMapReady] = useState(false);
   const [selectedReportId, setSelectedReportId] = useState<number | null>(null);
   const [labelFilter, setLabelFilter] = useState<string>("all");
+  const { isAuthenticated } = useAuth();
+  const [showAuthModal] = useState(!isAuthenticated);
+  const navigate = useNavigate();
+
+// Redirect to login if not authenticated
+  if (!isAuthenticated && showAuthModal) {
+    return (
+      <>
+        <Navbar />
+        <Modal
+          isOpen={!isAuthenticated}
+          title="Login Required"
+          onClose={() => navigate("/")}
+          size="sm"
+          footer={
+            <div className="flex gap-2">
+              <button
+                onClick={() => navigate("/login")}
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                Login
+              </button>
+              <button
+                onClick={() => navigate("/register")}
+                className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+              >
+                Register
+              </button>
+            </div>
+          }
+        >
+          <p className="text-gray-700 dark:text-gray-300">
+            You must be logged in to access the full features of EcoSnap.
+          </p>
+        </Modal>
+      </>
+    );
+  }
+
+
 
   useEffect(() => {
     setIsMapReady(true);

@@ -149,7 +149,7 @@ export default function UploadEvidencePage() {
           }
         >
           <p className="text-gray-700 dark:text-gray-300">
-            You must be logged in to upload environmental evidence and access the full features of EcoSnap.
+            You must be logged in to access the full features of EcoSnap.
           </p>
         </Modal>
       </>

@@ -25,6 +25,9 @@ import {
   type CommunityPost,
   type CommunityComment,
 } from "../services/api";
+import Modal from "../components/Modal";
+
+
 
 // ─── Pure helpers ────────────────────────────────────────────────────────────
 
@@ -76,6 +79,7 @@ function Avatar({ name, size = "md" }: Readonly<{ name: string; size?: "sm" | "m
     </div>
   );
 }
+
 
 // ─── Lightbox ────────────────────────────────────────────────────────────────
 
@@ -248,6 +252,8 @@ export default function CommunityReportPage() {
   const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [showAuthModal] = useState(!isAuthenticated);
+
 
   // composer
   const [content, setContent] = useState("");
@@ -299,6 +305,40 @@ export default function CommunityReportPage() {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+      if (!isAuthenticated && showAuthModal) {
+    return (
+      <>
+        <Navbar />
+        <Modal
+          isOpen={!isAuthenticated}
+          title="Login Required"
+          onClose={() => navigate("/")}
+          size="sm"
+          footer={
+            <div className="flex gap-2">
+              <button
+                onClick={() => navigate("/login")}
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                Login
+              </button>
+              <button
+                onClick={() => navigate("/register")}
+                className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+              >
+                Register
+              </button>
+            </div>
+          }
+        >
+          <p className="text-gray-700 dark:text-gray-300">
+            You must be logged in to access the full features of EcoSnap.
+          </p>
+        </Modal>
+      </>
+    );
+  }
 
   // ── Composer helpers
   function handleContentChange(e: React.ChangeEvent<HTMLTextAreaElement>) {

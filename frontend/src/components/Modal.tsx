@@ -20,14 +20,14 @@ export default function Modal({ isOpen, title, children, onClose, footer, size =
   return (
     <AnimatePresence>
       {isOpen && (
-        <>
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50">
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/50 z-40"
+            // className="fixed grid place-items-center inset-0 bg-black/50 z-40"
           />
 
           {/* Modal */}
@@ -36,7 +36,6 @@ export default function Modal({ isOpen, title, children, onClose, footer, size =
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             className={`
-              fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2
               z-50 ${sizes[size]}
               bg-white dark:bg-gray-800 rounded-lg shadow-xl
               overflow-hidden
@@ -63,7 +62,7 @@ export default function Modal({ isOpen, title, children, onClose, footer, size =
               </div>
             )}
           </motion.div>
-        </>
+        </div>
       )}
     </AnimatePresence>
   );
